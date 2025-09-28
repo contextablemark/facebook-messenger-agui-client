@@ -7,7 +7,7 @@ export default defineConfig({
     include: ['**/*.test.ts'],
     coverage: {
       reporter: ['text', 'lcov'],
-      reportsDirectory: 'coverage'
-    }
-  }
+      reportsDirectory: 'coverage',
+    },
+  },
 });

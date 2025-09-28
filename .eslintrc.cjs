@@ -4,18 +4,18 @@ module.exports = {
   parserOptions: {
     project: './tsconfig.build.json',
     tsconfigRootDir: __dirname,
-    sourceType: 'module'
+    sourceType: 'module',
   },
   env: {
     es2020: true,
-    node: true
+    node: true,
   },
   plugins: ['@typescript-eslint', 'import'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:import/typescript',
-    'prettier'
+    'prettier',
   ],
   rules: {
     '@typescript-eslint/no-floating-promises': 'error',
@@ -24,13 +24,9 @@ module.exports = {
       'error',
       {
         'newlines-between': 'always',
-        alphabetize: { order: 'asc', caseInsensitive: true }
-      }
-    ]
+        alphabetize: { order: 'asc', caseInsensitive: true },
+      },
+    ],
   },
-  ignorePatterns: [
-    'node_modules/',
-    'dist/',
-    '**/*.js'
-  ]
+  ignorePatterns: ['node_modules/', 'dist/', '**/*.js'],
 };
