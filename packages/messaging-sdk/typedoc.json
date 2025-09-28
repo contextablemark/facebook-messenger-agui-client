@@ -1,0 +1,13 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "tsconfig": "tsconfig.json",
+  "out": "../../docs/reference/messaging-sdk",
+  "entryPointStrategy": "expand",
+  "plugin": [],
+  "excludeInternal": true,
+  "validation": {
+    "notDocumented": false,
+    "invalidLink": false
+  }
+}

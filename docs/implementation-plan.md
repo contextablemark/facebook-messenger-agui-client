@@ -99,20 +99,20 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 
 ## Status Tracking
 
-| Workstream            | Owner | Status  | Notes                                                        |
-| --------------------- | ----- | ------- | ------------------------------------------------------------ |
-| Repository foundation |       | ✅ Done | P0 scaffolding, tooling config, and CI workflow established. |
-
-| Messenger agent SDK | | ☐ Not started / ☐ In progress / ☐ Done | |
-| Gateway service | | ☐ Not started / ☐ In progress / ☐ Done | |
-| Docs & configuration | | ☐ Not started / ☐ In progress / ☐ Done | |
-| CI/CD & Railway | | ☐ Not started / ☐ In progress / ☐ Done | |
-| Testing & QA | | ☐ Not started / ☐ In progress / ☐ Done | |
-| Deployment & operations | | ☐ Not started / ☐ In progress / ☐ Done | |
+| Workstream              | Owner      | Status        | Notes                                                                             |
+| ----------------------- | ---------- | ------------- | --------------------------------------------------------------------------------- |
+| Repository foundation   |            | ✅ Done       | P0 scaffolding, tooling config, and CI workflow established.                      |
+| Messenger agent SDK     | Codex (AI) | ✅ Done       | Phase 1 agent, signature verification, normalization helpers, and unit tests.     |
+| Gateway service         |            | ☐ Not started |                                                                                   |
+| Docs & configuration    |            | ☐ Not started |                                                                                   |
+| CI/CD & Railway         |            | ☐ Not started |                                                                                   |
+| Testing & QA            | Codex (AI) | In progress   | Messaging SDK unit tests landed; integration and end-to-end suites still pending. |
+| Deployment & operations |            | ☐ Not started |                                                                                   |
 
 ## Change Log
 
-| Date       | Author | Summary                                                              |
-| ---------- | ------ | -------------------------------------------------------------------- |
-| 2025-09-27 |        | Initial draft.                                                       |
-| 2025-09-28 |        | Phase 0 scaffolding: pnpm workspace, tooling baselines, CI workflow. |
+| Date       | Author     | Summary                                                                                |
+| ---------- | ---------- | -------------------------------------------------------------------------------------- |
+| 2025-09-27 |            | Initial draft.                                                                         |
+| 2025-09-28 |            | Phase 0 scaffolding: pnpm workspace, tooling baselines, CI workflow.                   |
+| 2025-09-28 | Codex (AI) | Phase 1 delivers FacebookMessengerAgent, signature helpers, tests, and Typedoc script. |
