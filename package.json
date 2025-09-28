@@ -1,0 +1,42 @@
+{
+  "name": "facebook-messenger-agui-client",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Workspace for the AG-UI Facebook Messenger integration",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18.17",
+    "pnpm": ">=8"
+  },
+  "scripts": {
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "typecheck": "tsc --project tsconfig.build.json --pretty",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "@typescript-eslint/eslint-plugin": "^7.1.1",
+    "@typescript-eslint/parser": "^7.1.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "husky": "^9.0.10",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.2",
+    "vitest": "^1.4.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,mdx,yml,yaml}": "prettier --write"
+  }
+}
