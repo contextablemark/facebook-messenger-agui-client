@@ -1,169 +1,91 @@
-# Facebook Messenger ↔︎ AG-UI Integration PRD
+# Facebook Messenger Integration PRD
 
-## Background
-Facebook Messenger reaches billions of users and offers a familiar chat UX for consumer and enterprise scenarios. Agentic systems built on AG-UI already expose a consistent HTTP/SSE protocol for creating runs and streaming responses across heterogeneous frameworks (OpenAI, Claude, LlamaIndex, etc.). A dedicated Messenger integration enables teams to reach users where they already are, without rebuilding channel-specific bot infrastructure for every agent runtime.
+## Overview
+The Facebook Messenger integration enables AnySphere Graph to receive, process, and respond to messages from business-managed Messenger channels. The feature will expose a webhook endpoint that validates Facebook signatures, translate incoming payloads into the platform's unified message schema, and route outbound replies through Facebook's Send API. The integration must offer a fast developer onboarding experience with clear deployment paths for both local experimentation and production.
 
-This project establishes a standalone repository that ships a lightweight TypeScript gateway translating Messenger webhooks into AG-UI runs, plus supporting tooling (infrastructure-as-code, deployment scripts, sample configuration) so developers can self-host or extend the connector.
+## Goals
+- Provide a reliable bridge between Facebook Messenger conversations and the AnySphere Graph messaging infrastructure.
+- Ship a developer experience that works locally via Docker Compose and scales via a managed Railway deployment.
+- Document all configuration, deployment, and operational steps so support and solutions engineers can follow a repeatable playbook.
 
-## Objectives
-- Deliver an open-source repository that provides an end-to-end bridge between Facebook Messenger conversations and AG-UI agents.
-- Keep the implementation lightweight: reuse the existing AG-UI HTTP protocol via the `HttpAgent` helper and avoid modifying AG-UI core services.
-- Provide a production-ready foundation with documentation, testing, deployment automation, and observability hooks suitable for a blog-driven walkthrough.
-- Showcase the integration journey through a blog post that references the repo structure, setup steps, and extension ideas.
-
-### Non-Goals
-- Creating bespoke Messenger UX beyond the standard text, quick replies, or typing indicators.
-- Extending AG-UI protocol semantics or altering its server implementation.
-- Building a web frontend or Dojo integration—this repo focuses solely on Messenger ↔︎ AG-UI bridging.
-
-## Target Users
-- **Agent developers** who maintain AG-UI-compatible backends and want to expose their bots on Facebook Messenger.
-- **Solution engineers** looking for a reference implementation to embed agents in social/chat channels.
-- **Content creators** (blog readers) interested in the full lifecycle of shipping an integration from concept to deployment.
-
-## User Stories
-1. *As a developer*, I can clone the repository, configure environment variables for Facebook and AG-UI, and run a webhook locally (via ngrok) to chat with my agent from Messenger.
-2. *As an operator*, I can deploy the gateway to a container environment (Docker Compose or Fly.io) with minimal configuration and monitor logs/metrics.
-3. *As a maintainer*, I can run automated tests (unit and integration) to verify message translation logic and webhook handlers before pushing changes.
-4. *As a blogger*, I can follow a documented, linear workflow (repo creation, configuration, testing, deployment) to illustrate the integration in an article.
-
-## Scope & Deliverables
-### 1. Repository Structure
-```
-facebook-messenger-ag-ui/
-├── README.md
-├── packages/
-│   ├── messenger-agent/        # Lightweight SDK wrapper around HttpAgent
-│   └── messenger-gateway/      # Express/Fastify webhook service
-├── infra/
-│   ├── docker-compose.yml
-│   └── fly/
-│       └── fly.toml
-├── docs/
-│   ├── SETUP.md
-│   ├── DEPLOYMENT.md
-│   └── BLOG_OUTLINE.md
-└── scripts/
-    ├── dev.sh
-    └── verify.mjs
-```
-
-### 2. Messenger Agent Package (`packages/messenger-agent`)
-- TypeScript package mirroring `HttpAgent` usage from AG-UI TypeScript SDK.
-- Exports `FacebookMessengerAgent` class with convenience constructor (base URL, auth headers) and helpers for converting Messenger messages to AG-UI `UserMessage` objects.
-- Includes unit tests for message normalization utilities.
-- Published (optional) to npm under scoped package for reuse.
-
-### 3. Messenger Gateway Service (`packages/messenger-gateway`)
-- Fastify-based webhook with endpoints:
-  - `GET /webhook` for Facebook verification.
-  - `POST /webhook` to receive message events.
-  - `POST /healthz` or `GET /healthz` for health checks.
-- Uses `FacebookMessengerAgent` to initiate AG-UI runs per `sender.id`.
-- Maintains in-memory session map (`sender.id` ↔︎ `threadId`) with pluggable storage adapter (Redis optional).
-- Translates AG-UI event lifecycle:
-  - `run.started` → Messenger `typing_on`.
-  - `run.completed` with `assistant` messages → Messenger text payloads.
-  - `run.failed` → Messenger error response with retry guidance.
-  - Tool outputs → fallback text or attachments depending on event metadata.
-- Sends replies via Facebook Send API with retry/backoff logic.
-- Supports slash commands (`/reset`, `/help`) to reset thread or display status.
-- Includes structured logging (pino) and metrics (Prometheus exporter) for observability.
-
-### 4. Configuration & Secrets
-- `.env.example` covering:
-  - `FACEBOOK_APP_SECRET`
-  - `FACEBOOK_VERIFY_TOKEN`
-  - `FACEBOOK_PAGE_ACCESS_TOKEN`
-  - `AGUI_BASE_URL`
-  - `AGUI_API_KEY`
-  - `SESSION_STORE` options (memory/redis URL)
-- Guidance on storing secrets via Doppler, 1Password, or GitHub Actions secrets.
-
-### 5. Tooling & CI/CD
-- `pnpm` workspace managing both packages with shared lint/test commands.
-- ESLint + Prettier configuration shared across packages.
-- GitHub Actions workflows:
-  - `ci.yml` running lint, type-check, unit tests.
-  - `docker.yml` building/publishing container image on tagged releases.
-- Release automation using Changesets or simple npm publish script.
-
-### 6. Documentation
-- `README.md` giving quickstart (local dev, ngrok, Messenger app setup).
-- `docs/SETUP.md` deeper walkthrough with screenshots (webhook config, verifying tokens).
-- `docs/DEPLOYMENT.md` instructions for Docker Compose and Fly.io.
-- `docs/BLOG_OUTLINE.md` bullet list aligning with blog narrative (repo creation → first chat → deployment).
-- Inline JSDoc comments for API functions.
-
-### 7. Testing Strategy
-- Unit tests for:
-  - Message normalization (attachments, quick replies).
-  - Session store adapters.
-  - AG-UI event translation utilities.
-- Integration tests using mocked Messenger webhook payloads and AG-UI responses (via MSW or nock).
-- End-to-end smoke test harness that spins up the gateway against a mock AG-UI server.
-
-### 8. Deployment Targets
-- Docker Compose for local/self-hosted deployments (Messenger webhook + optional Redis).
-- Fly.io app definition (`infra/fly/fly.toml`) showcasing cloud deployment.
-- Guidance for serverless options (Cloudflare Workers / AWS Lambda) noting adjustments needed.
-
-### 9. Observability
-- Request/response logging with correlation IDs (Messenger `sender.id`, AG-UI `threadId`).
-- Metrics:
-  - `messenger_inbound_total`
-  - `agui_runs_total`
-  - `agui_run_duration_seconds`
-  - `messenger_delivery_failures_total`
-- Optional OpenTelemetry tracing integration toggle.
-
-## Implementation Plan
-1. **Repo Initialization**
-   - Create GitHub repo, configure pnpm workspace, scaffold packages and shared configs.
-   - Set up linting, formatting, and testing baseline.
-2. **Messenger Agent Package**
-   - Implement `FacebookMessengerAgent` + utilities.
-   - Write unit tests and generate typedocs.
-3. **Gateway Service**
-   - Implement webhook endpoints, session management, AG-UI stream handling.
-   - Add command handlers, logging, metrics.
-   - Build integration tests.
-4. **Configuration & Docs**
-   - Author README and setup guides.
-   - Provide `.env.example`, sample requests, ngrok instructions.
-5. **Deployment Automation**
-   - Create Dockerfile, docker-compose, Fly.io manifests.
-   - Add GitHub Actions workflows.
-6. **Final QA & Blog Prep**
-   - Run end-to-end smoke tests with real Messenger sandbox.
-   - Capture screenshots/logs for blog post.
-   - Finalize `docs/BLOG_OUTLINE.md` referencing repo paths.
-
-## Risks & Mitigations
-- **Facebook API changes**: Monitor versioned Graph API; pin to stable version and document upgrade path.
-- **Rate limits**: Implement exponential backoff and alerting when hitting Send API limits.
-- **Session persistence**: Provide Redis adapter and instructions for stateless deployments.
-- **Security**: Verify webhook signatures using App Secret; ensure HTTPS with recommended reverse proxy (ngrok, Fly.io).
-- **AG-UI availability**: Add retries/circuit breaker when AG-UI backend is unavailable and send fallback message to users.
+## Non-Goals
+- Building a full Messenger bot authoring interface.
+- Supporting legacy Facebook apps that do not meet current Graph API requirements.
+- Delivering multi-tenant billing or quota enforcement beyond existing platform capabilities.
 
 ## Success Metrics
-- Ability to complete a Messenger conversation with an AG-UI agent using the sample setup within 30 minutes following documentation.
-- CI pipeline passing (lint, test, type-check) on main branch.
-- At least one deployment recipe (Docker Compose) validated in README tutorial.
-- Positive engagement with accompanying blog post (qualitative).
+- 95% of Messenger webhook events are processed within 2 seconds end-to-end.
+- Messenger-to-platform message delivery errors remain below 0.5% weekly.
+- Internal developer onboarding survey yields 4.5+/5 satisfaction with documentation and deployment experience.
 
-## Open Questions
-- Should we publish the `messenger-agent` package independently to npm or keep it internal to the repo?
-- What level of attachment/tool support is required for MVP (images, location, structured templates)?
-- Do we need multi-language localization for canned responses (`/help`, error messages)?
+## Repository Scaffold
+```
+.
+├── apps
+│   └── messenger-webhook
+├── infra
+│   └── railway
+│       ├── README.md
+│       └── railway.json
+├── packages
+│   ├── messaging-sdk
+│   └── server-utils
+├── docker-compose.yml
+└── docs
+    └── drafts
+        └── facebook-messenger-integration-prd.md
+```
+- `infra/railway/` holds managed deployment manifests and instructions for the shared Railway project.
+- `docker-compose.yml` continues to provide the recommended local development and QA environment.
+- All Messenger integration source code lives under `apps/messenger-webhook` with shared utilities in `packages/`.
 
-## Appendix: Blog Post Outline
-1. Motivation: connecting Messenger audiences to AG-UI agents.
-2. Repo scaffolding and architecture overview.
-3. Implementing the Messenger Agent package (code snippets).
-4. Building the webhook gateway (verification, message flow, AG-UI streaming).
-5. Running locally with ngrok and Messenger sandbox.
-6. Deploying to Fly.io (optional alternative: Docker Compose on VPS).
-7. Observability and operational tips.
-8. Future enhancements (attachments, multi-agent routing, analytics).
+## Documentation
+1. Update the integration quickstart to cover:
+   - Installing the Railway CLI (`npm i -g railway`) and logging in (`railway login`).
+   - Linking the repository to the shared project (`railway link --project messenger-integration`).
+   - Running local services with `docker compose up messenger-webhook` for iterative testing.
+2. Add an `infra/railway/README.md` with:
+   - Environment variable mappings between Railway, Facebook App settings, and the webhook application.
+   - Steps for triggering `railway up` to provision the service from `infra/railway/railway.json`.
+   - Guidance for viewing logs via `railway logs messenger-webhook` and for rolling back using `railway deployments`.
+3. Provide troubleshooting guidance for Messenger webhook validation, Railway secrets, and Docker Compose networking parity.
 
+## Deployment Targets
+- **Local / Developer:** Docker Compose orchestrates the webhook app and supporting services (e.g., Postgres, Redis). Developers use `docker compose --profile messenger up` with tunnelled Facebook callbacks via ngrok for webhook verification.
+- **Staging and Production:** Railway hosts the containerized webhook service. Deployment artifacts come from `infra/railway/railway.json` and environment configuration lives in Railway secrets. CI promotes builds by running `railway deploy --service messenger-webhook --from build`. Blue/green deploys leverage Railway's automatic service versioning.
+- **Observability:** Logs and metrics flow through Railway's dashboard with forwarders to Grafana. Alerts are configured using Railway's integrations for Slack and PagerDuty.
+
+## Implementation Plan
+1. **Scaffold & Configuration**
+   - Create `infra/railway/railway.json` describing the `messenger-webhook` service, environment variables, Postgres add-on, and health checks.
+   - Author `infra/railway/README.md` documenting CLI usage, token management, and deployment workflows.
+   - Update `docker-compose.yml` to ensure parity with the Railway service (matching ports, environment, and secrets).
+2. **Application Development**
+   - Build the webhook receiver with Facebook signature validation middleware and structured logging.
+   - Implement outbound message handling with retries that align with Messenger's delivery guarantees.
+   - Ensure feature flags and secrets can be injected via Railway environment variables.
+3. **CI/CD Integration**
+   - Extend GitHub Actions to authenticate with Railway using `railway login --token $RAILWAY_TOKEN` and trigger `railway deploy` on tagged releases.
+   - Add automated tests to the CI pipeline using `docker compose run` for integration coverage prior to Railway deploys.
+   - Store Railway service IDs and environment IDs in repository secrets for reuse across workflows.
+4. **Testing & Verification**
+   - Validate local flows via Docker Compose and the Graph API test console.
+   - Run staging deploys through Railway, verifying health checks, logs, and rollback commands (`railway rollback --service messenger-webhook`).
+   - Coordinate with Solutions Engineering to send pilot Messenger conversations through staging prior to production promotion.
+
+## Risks & Mitigations
+- **Railway resource limits or plan changes** may impact uptime. Mitigation: configure horizontal autoscaling in `railway.json`, monitor usage, and maintain exportable Terraform-equivalent config for migration fallback.
+- **CLI authentication churn** could block deploys. Mitigation: rotate Railway tokens regularly, document `railway status` checks in runbooks, and add automated reminders for token renewal.
+- **Webhook downtime during deploys** risks Facebook verification failures. Mitigation: rely on Railway's zero-downtime deploy strategy, keep `docker compose` environment ready for emergency failover, and document manual rollback via `railway rollback`.
+- **Secrets drift between local and cloud** could introduce inconsistent behavior. Mitigation: manage secrets centrally in Railway, mirror them locally via `.env` templates, and run configuration drift checks in CI.
+
+## Blog Outline
+1. **Hook:** Highlight how the team moved from manual Messenger integrations to a standardized deployment via Docker Compose locally and Railway in the cloud.
+2. **Problem Statement:** Challenges maintaining webhook infrastructure and aligning local testing with production environments.
+3. **Solution Overview:** Describe the new Messenger integration, the Docker Compose developer workflow, and Railway-managed production pipeline.
+4. **Technical Deep Dive:**
+   - Webhook validation, message translation, and outbound messaging.
+   - Infrastructure as code using `infra/railway/railway.json` and CI-driven `railway deploy` commands.
+   - Observability and rollback using Railway dashboards.
+5. **Results:** Faster onboarding, reduced deploy friction, and improved reliability metrics.
+6. **Call to Action:** Encourage developers to try the integration and follow the Railway deployment guide for their own Messenger use cases.
