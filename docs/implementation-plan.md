@@ -86,6 +86,7 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 | Workstream | Owner | Status | Notes |
 | --- | --- | --- | --- |
 | Repository foundation |  | ✅ Done | P0 scaffolding, tooling config, and CI workflow established. |
+
 | Messenger agent SDK |  | ☐ Not started / ☐ In progress / ☐ Done |  |
 | Gateway service |  | ☐ Not started / ☐ In progress / ☐ Done |  |
 | Docs & configuration |  | ☐ Not started / ☐ In progress / ☐ Done |  |
@@ -97,4 +98,4 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 | Date | Author | Summary |
 | --- | --- | --- |
 | 2025-09-27 |  | Initial draft. |
-| 2025-09-28 |  | Phase 0 scaffolding: pnpm workspace, tooling baselines, CI workflow. |
+| 2025-09-28 |  | Phase 0 scaffolding: pnpm workspace, tooling baselines, CI workflow. 
