@@ -32,23 +32,31 @@ The Facebook Messenger integration enables AnySphere Graph to receive, process, 
 │   └── server-utils
 ├── docker-compose.yml
 └── docs
+    ├── implementation-plan.md
     └── drafts
         └── facebook-messenger-integration-prd.md
 ```
 - `infra/railway/` holds managed deployment manifests and instructions for the shared Railway project.
 - `docker-compose.yml` continues to provide the recommended local development and QA environment.
 - All Messenger integration source code lives under `apps/messenger-webhook` with shared utilities in `packages/`.
+- `docs/implementation-plan.md` captures the detailed execution roadmap and status tracking for the project.
 
 ## Documentation
-1. Update the integration quickstart to cover:
-   - Installing the Railway CLI (`npm i -g railway`) and logging in (`railway login`).
-   - Linking the repository to the shared project (`railway link --project messenger-integration`).
-   - Running local services with `docker compose up messenger-webhook` for iterative testing.
+1. Update the repository `README.md` to deliver a guided quickstart covering:
+   - pnpm workspace bootstrapping, lint/type-check/test commands, and parity between Docker Compose and the Railway build pipeline.
+   - Installing the Railway CLI (`npm i -g railway`), logging in with `railway login`, and linking to the shared project via `railway link`.
+   - Running local services with `docker compose up messenger-webhook` (or a dedicated profile) alongside ngrok configuration for webhook verification.
+   - Environment variable reference table mapping Facebook, AG-UI, and Railway secrets, plus troubleshooting callouts for signature mismatches and Send API errors.
 2. Add an `infra/railway/README.md` with:
    - Environment variable mappings between Railway, Facebook App settings, and the webhook application.
-   - Steps for triggering `railway up` to provision the service from `infra/railway/railway.json`.
-   - Guidance for viewing logs via `railway logs messenger-webhook` and for rolling back using `railway deployments`.
-3. Provide troubleshooting guidance for Messenger webhook validation, Railway secrets, and Docker Compose networking parity.
+   - Steps for provisioning services using `railway up` from `infra/railway/railway.json`, including Postgres/Redis add-ons if required.
+   - Guidance for viewing logs via `railway logs messenger-webhook`, promoting builds with `railway deploy --service messenger-webhook --from build`, and rolling back using `railway deployments`.
+   - Token rotation procedures, audit recommendations, and escalation paths for on-call engineers.
+3. Produce companion documents under `docs/`:
+   - `docs/SETUP.md` for Facebook developer console onboarding with screenshots, webhook verification, and signature debugging.
+   - `docs/DEPLOYMENT.md` for Docker Compose ↔ Railway parity, CLI workflows, scaling playbooks, and observability setup.
+   - `docs/RUNBOOK.md` outlining incident response, rate-limit management, and secrets rotation checklists.
+   - `docs/BLOG_OUTLINE.md` drafting the launch narrative tying local development to Railway-managed operations.
 
 ## Deployment Targets
 - **Local / Developer:** Docker Compose orchestrates the webhook app and supporting services (e.g., Postgres, Redis). Developers use `docker compose --profile messenger up` with tunnelled Facebook callbacks via ngrok for webhook verification.
@@ -56,22 +64,55 @@ The Facebook Messenger integration enables AnySphere Graph to receive, process, 
 - **Observability:** Logs and metrics flow through Railway's dashboard with forwarders to Grafana. Alerts are configured using Railway's integrations for Slack and PagerDuty.
 
 ## Implementation Plan
-1. **Scaffold & Configuration**
-   - Create `infra/railway/railway.json` describing the `messenger-webhook` service, environment variables, Postgres add-on, and health checks.
-   - Author `infra/railway/README.md` documenting CLI usage, token management, and deployment workflows.
-   - Update `docker-compose.yml` to ensure parity with the Railway service (matching ports, environment, and secrets).
-2. **Application Development**
-   - Build the webhook receiver with Facebook signature validation middleware and structured logging.
-   - Implement outbound message handling with retries that align with Messenger's delivery guarantees.
-   - Ensure feature flags and secrets can be injected via Railway environment variables.
-3. **CI/CD Integration**
-   - Extend GitHub Actions to authenticate with Railway using `railway login --token $RAILWAY_TOKEN` and trigger `railway deploy` on tagged releases.
-   - Add automated tests to the CI pipeline using `docker compose run` for integration coverage prior to Railway deploys.
-   - Store Railway service IDs and environment IDs in repository secrets for reuse across workflows.
-4. **Testing & Verification**
-   - Validate local flows via Docker Compose and the Graph API test console.
-   - Run staging deploys through Railway, verifying health checks, logs, and rollback commands (`railway rollback --service messenger-webhook`).
-   - Coordinate with Solutions Engineering to send pilot Messenger conversations through staging prior to production promotion.
+
+### Phase & Milestone Schedule
+| Phase | Target Duration | Key Outcomes |
+| --- | --- | --- |
+| **P0 – Repository Foundation** | Week 1 | pnpm workspace, shared lint/test config, baseline CI smoke job, directory skeleton (`apps/`, `packages/`, `infra/railway/`, `docs/`). |
+| **P1 – Messenger Agent SDK** | Weeks 2-3 | `FacebookMessengerAgent`, payload normalization utilities, signature helpers, unit tests, Typedoc build artifact. |
+| **P2 – Gateway Service** | Weeks 3-5 | Fastify webhook endpoints, session store abstraction, AG-UI event translation, slash command support, structured logging and metrics. |
+| **P3 – Configuration & Docs** | Weeks 5-6 | `.env.example`, README quickstart, setup/deployment/troubleshooting guides, security checklist draft. |
+| **P4 – Railway Deployment & CI Hardening** | Weeks 6-7 | Dockerfile/compose parity, `infra/railway/railway.json`, Railway CLI workflow, deploy GitHub Action, release automation hooks. |
+| **P5 – Final QA & Launch Prep** | Week 8 | Local + Railway staging smoke tests, runbooks, observability validation, launch communications package. |
+
+### Detailed Workstreams
+1. **Repository Initialization**
+   - Scaffold pnpm workspace (`package.json`, `pnpm-workspace.yaml`) covering `apps/messenger-webhook`, `packages/messaging-sdk`, and shared tooling.
+   - Establish shared TypeScript configs, ESLint/Prettier rules, Husky pre-commit hooks, and Changesets configuration for eventual package releases.
+   - Author base GitHub Action (`.github/workflows/ci.yml`) that runs lint, type-check, and tests on Node 18/20 with caching and coverage upload.
+2. **Messenger Agent Package (`packages/messaging-sdk`)**
+   - Implement `FacebookMessengerAgent` extending AG-UI HTTP abstractions with helpers for text, attachments, and quick reply normalization.
+   - Provide signature verification utilities and thread/session metadata mappers to share across services.
+   - Achieve near-100% unit test coverage for payload transforms, signature validation, and error handling.
+   - Generate API docs via Typedoc (output to `docs/reference/` or package README) and wire Changesets for semantic versioning.
+3. **Messenger Gateway Service (`apps/messenger-webhook`)**
+   - Build Fastify server exposing `GET /webhook` verification, `POST /webhook` intake, and health probe endpoints.
+   - Integrate middleware for signature validation, request tracing, rate limiting, and correlation IDs.
+   - Translate AG-UI run events into Messenger actions (typing indicators, message sends, error fallbacks) and implement slash commands (`/reset`, `/help`).
+   - Introduce session store abstraction with in-memory default and Redis adapter; document scaling considerations for Railway.
+   - Add observability instrumentation (pino logs, Prometheus metrics exporter) and retries/backoff for Send API failures.
+4. **Configuration & Security**
+   - Create `.env.example` detailing Facebook credentials, AG-UI endpoints, session store settings, Railway project/service IDs, and optional Redis URL.
+   - Document secret management practices, TLS expectations, webhook signature validation, and rate-limit monitoring in `docs/SETUP.md` and runbooks.
+   - Build configuration drift detection (script comparing `.env` vs. Railway secrets) and integrate into CI warnings.
+5. **Tooling, CI/CD, and Release Automation**
+   - Extend CI with job stages for lint/typecheck/unit tests, Docker image build, and artifact caching for Railway deploys.
+   - Author `railway-deploy.yml` workflow to authenticate with `RAILWAY_TOKEN`, run build commands, and execute `railway deploy --service messenger-webhook --from build` for staging/production environments.
+   - Provide developer scripts (`scripts/dev.sh`, `scripts/verify.mjs`) that orchestrate local dev, ngrok tunneling, and verification steps aligning with CI gating.
+6. **Testing & Verification**
+   - Unit tests for payload normalization, signature verification, session adapters, and slash command handlers.
+   - Integration tests using mocked Messenger payloads and AG-UI responses (MSW/nock) validating retries, typing indicators, and error flows.
+   - End-to-end smoke harness that exercises Docker Compose locally and Railway staging deployments, capturing latency and delivery metrics.
+   - Performance regression suite ensuring <2s median processing and <0.5% delivery errors; report findings in launch readout.
+7. **Deployment & Operations**
+   - Author `infra/railway/railway.json` describing service definition, build/deploy settings, health checks, and add-ons (Redis/Postgres as needed).
+   - Document Railway secrets management, log access, rollback, and autoscaling toggles in `infra/railway/README.md`.
+   - Maintain Docker Compose parity with the Railway service and note fallback procedures if Railway is unavailable.
+   - Define observability integration (Grafana dashboards, alert routes) and link metrics names to on-call expectations.
+8. **Risk Management & Success Tracking**
+   - Track risks such as Railway plan limits, CLI token expiration, webhook downtime, and secret drift with clear owners and mitigations.
+   - Monitor success metrics (webhook latency, delivery errors, onboarding satisfaction) and log progress in `docs/implementation-plan.md` during weekly reviews.
+   - Capture open questions (package publishing strategy, localization, attachment roadmap) and resolve them during backlog grooming.
 
 ## Risks & Mitigations
 - **Railway resource limits or plan changes** may impact uptime. Mitigation: configure horizontal autoscaling in `railway.json`, monitor usage, and maintain exportable Terraform-equivalent config for migration fallback.
