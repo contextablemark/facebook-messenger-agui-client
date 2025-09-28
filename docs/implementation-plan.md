@@ -49,6 +49,13 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 - Achieve near-100% unit test coverage for payload transforms, signature validation, and error handling.
 - Generate API docs via Typedoc (output to `docs/reference/` or README) and wire Changesets for semantic versioning.
 
+#### Phase 1 Execution Notes (2025-09-28)
+
+- Delivered `FacebookMessengerAgent` with outbound Send API orchestration, signature verification, webhook normalization entry points, and rich error propagation.
+- Factored reusable utilities (`normalizeWebhookPayload`, message/quick reply builders, signature helpers) exposed through the messaging SDK for downstream services.
+- Added comprehensive unit tests covering agent behaviours, normalization branches, and signature validation edge cases to lock in regression protection.
+- Wired Typedoc generation via `pnpm docs:messaging-sdk`, publishing static docs under `docs/reference/messaging-sdk` for consumer reference.
+
 ### 3. Messenger Gateway Service (`apps/messenger-webhook`)
 
 - Build Fastify server exposing `GET /webhook` verification, `POST /webhook` intake, and health probe endpoints.
