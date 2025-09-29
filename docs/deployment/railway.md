@@ -29,9 +29,9 @@ pnpm docs:messaging-sdk
 Until the repository ships a production Dockerfile, deploy the TypeScript sources directly with the Railway Node.js runtime:
 
 1. Ensure the workspace root includes the compiled SDK output (the package currently ships TypeScript sources with ESM exports).
-2. Set the Railway service start command to:
+2. Set the Railway service start command to the workspace default:
    ```sh
-   pnpm exec tsx apps/messenger-webhook/src/index.ts
+   pnpm start
    ```
 3. Pin the Node version to `20.x` inside Railway so Fastify and the SDK run on the same baseline used in CI.
 
