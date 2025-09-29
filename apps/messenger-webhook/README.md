@@ -7,7 +7,7 @@ The Messenger webhook gateway is a Fastify application that validates Facebook w
 - **Fastify server** – exposes public webhook endpoints and an internal health probe, manages lifecycle hooks, and hosts shared plugins (logging, metrics, rate limiting).
 - **Messenger guard** – verifies `X-Hub-Signature-256` headers with the Facebook App secret before any payload processing occurs.
 - **Event normaliser** – converts Messenger payloads to `NormalizedMessengerEvent` objects using the Phase 1 SDK helpers.
-- **AG-UI dispatcher** – adapts normalised events into AG-UI run invocations (exact contract confirmed with the AG-UI platform team). Outbound responses flow back through the Messenger Send API helper in the SDK.
+- **AG-UI dispatcher** – adapts normalised events into AG-UI run invocations (exact contract defined in the AG-UI protocol spec). Outbound responses flow back through the Messenger Send API helper in the SDK.
 - **Session store abstraction** – in-memory store for local use and Redis-backed implementation for Railway deployments, enabling slash commands and idempotency guarantees.
 - **Telemetry** – structured logging through Pino and a Prometheus metrics registry for request volume, latency, and failure counts.
 
@@ -31,6 +31,9 @@ Environment variables (subject to refinement once AG-UI docs are confirmed):
 - `AGUI_API_KEY` – credential used to authenticate outbound AG-UI requests.
 - `SESSION_STORE_DRIVER` – `memory` (default) or `redis`.
 - `REDIS_URL` – connection string used when the Redis driver is enabled.
+- `WEBHOOK_RATE_LIMIT_MAX` / `WEBHOOK_RATE_LIMIT_WINDOW` – optional overrides for request throttling.
+- `MESSENGER_MAX_TEXT_LENGTH` – cap for outbound message chunks (defaults to 2000 characters).
+- `MESSENGER_TYPING_KEEP_ALIVE_MS` – interval in milliseconds used to refresh typing indicators.
 
 ## Module Layout
 

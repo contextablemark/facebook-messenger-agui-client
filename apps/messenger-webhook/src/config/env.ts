@@ -34,6 +34,49 @@ const envSchema = z.object({
     .pipe(z.enum(['memory', 'redis'])),
   REDIS_URL: z.string().url('REDIS_URL must be a valid URL').optional(),
   LOG_LEVEL: z.string().optional(),
+  WEBHOOK_RATE_LIMIT_MAX: z
+    .string()
+    .optional()
+    .transform((value) => {
+      if (!value) {
+        return 60;
+      }
+      const parsed = Number.parseInt(value, 10);
+      if (Number.isNaN(parsed) || parsed <= 0) {
+        throw new Error(`Invalid WEBHOOK_RATE_LIMIT_MAX value: ${value}`);
+      }
+      return parsed;
+    }),
+  WEBHOOK_RATE_LIMIT_WINDOW: z
+    .string()
+    .optional()
+    .transform((value) => value ?? '1 minute'),
+  MESSENGER_MAX_TEXT_LENGTH: z
+    .string()
+    .optional()
+    .transform((value) => {
+      if (!value) {
+        return 2000;
+      }
+      const parsed = Number.parseInt(value, 10);
+      if (Number.isNaN(parsed) || parsed <= 0) {
+        throw new Error(`Invalid MESSENGER_MAX_TEXT_LENGTH value: ${value}`);
+      }
+      return parsed;
+    }),
+  MESSENGER_TYPING_KEEP_ALIVE_MS: z
+    .string()
+    .optional()
+    .transform((value) => {
+      if (!value) {
+        return 5000;
+      }
+      const parsed = Number.parseInt(value, 10);
+      if (Number.isNaN(parsed) || parsed <= 0) {
+        throw new Error(`Invalid MESSENGER_TYPING_KEEP_ALIVE_MS value: ${value}`);
+      }
+      return parsed;
+    }),
 });
 
 export type SessionStoreDriver = z.infer<typeof envSchema>['SESSION_STORE_DRIVER'];
@@ -50,9 +93,17 @@ export interface AppConfig {
     baseUrl?: string;
     apiKey?: string;
   };
+  rateLimit: {
+    max: number;
+    timeWindow: string;
+  };
   session: {
     driver: SessionStoreDriver;
     redisUrl?: string;
+  };
+  messenger: {
+    maxTextLength: number;
+    typingKeepAliveMs: number;
   };
   logLevel?: string;
 }
@@ -81,6 +132,10 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     SESSION_STORE_DRIVER,
     REDIS_URL,
     LOG_LEVEL,
+    WEBHOOK_RATE_LIMIT_MAX,
+    WEBHOOK_RATE_LIMIT_WINDOW,
+    MESSENGER_MAX_TEXT_LENGTH,
+    MESSENGER_TYPING_KEEP_ALIVE_MS,
   } = result.data;
 
   return {
@@ -95,9 +150,17 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
       baseUrl: AGUI_BASE_URL,
       apiKey: AGUI_API_KEY,
     },
+    rateLimit: {
+      max: WEBHOOK_RATE_LIMIT_MAX,
+      timeWindow: WEBHOOK_RATE_LIMIT_WINDOW,
+    },
     session: {
       driver: SESSION_STORE_DRIVER,
       redisUrl: REDIS_URL,
+    },
+    messenger: {
+      maxTextLength: MESSENGER_MAX_TEXT_LENGTH,
+      typingKeepAliveMs: MESSENGER_TYPING_KEEP_ALIVE_MS,
     },
     logLevel: LOG_LEVEL,
   };

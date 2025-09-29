@@ -49,6 +49,7 @@ export interface AguiDispatcherOptions {
   apiKey?: string;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
+  maxConsecutiveParseErrors?: number;
 }
 
 interface RunAgentInput {
@@ -117,6 +118,7 @@ class HttpAguiDispatcher implements AguiDispatcher {
   private readonly apiKey?: string;
   private readonly fetchImpl: typeof fetch;
   private readonly timeoutMs: number;
+  private readonly maxConsecutiveParseErrors: number;
 
   constructor(
     private readonly logger: AppLogger,
@@ -126,6 +128,7 @@ class HttpAguiDispatcher implements AguiDispatcher {
     this.apiKey = options.apiKey;
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
     this.timeoutMs = options.timeoutMs ?? 10_000;
+    this.maxConsecutiveParseErrors = options.maxConsecutiveParseErrors ?? 3;
   }
 
   async dispatch(
@@ -268,6 +271,8 @@ class HttpAguiDispatcher implements AguiDispatcher {
       handlers.onAssistantMessage?.({ messageId, content: trimmed });
     };
 
+    let consecutiveParseErrors = 0;
+
     for (const block of blocks) {
       if (!block) {
         continue;
@@ -290,8 +295,18 @@ class HttpAguiDispatcher implements AguiDispatcher {
       let event: Record<string, unknown>;
       try {
         event = JSON.parse(payloadString);
+        consecutiveParseErrors = 0;
       } catch (error) {
-        this.logger.warn({ error }, 'Failed to parse AG-UI SSE event payload');
+        consecutiveParseErrors += 1;
+        this.logger.warn(
+          { error, attempt: consecutiveParseErrors },
+          'Failed to parse AG-UI SSE event payload',
+        );
+        if (consecutiveParseErrors >= this.maxConsecutiveParseErrors) {
+          const parseError = new Error('Exceeded consecutive AG-UI SSE parse errors');
+          (parseError as { cause?: unknown }).cause = error;
+          throw parseError;
+        }
         continue;
       }
 

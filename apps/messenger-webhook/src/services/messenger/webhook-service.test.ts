@@ -9,7 +9,7 @@ import type { GatewayMetrics } from '../../telemetry/metrics';
 import type { AguiDispatcher } from '../agui';
 import { DEFAULT_SESSION_TTL_SECONDS, type SessionStore } from '../session';
 
-import { MessengerWebhookService } from './webhook-service';
+import { MessengerWebhookService, type MessengerWebhookServiceOptions } from './webhook-service';
 
 const basePayload: MessengerWebhookPayload = {
   object: 'page',
@@ -37,6 +37,7 @@ function createService(
     dispatcher: AguiDispatcher;
     sessions: SessionStore;
     metrics: GatewayMetrics;
+    options: MessengerWebhookServiceOptions;
   }> = {},
 ) {
   const agent = new FacebookMessengerAgent({
@@ -75,7 +76,14 @@ function createService(
     info: vi.fn(),
   } as unknown as AppLogger;
 
-  const service = new MessengerWebhookService(agent, dispatcher, sessions, metrics, logger);
+  const service = new MessengerWebhookService(
+    agent,
+    dispatcher,
+    sessions,
+    metrics,
+    logger,
+    overrides.options ?? { maxTextLength: 2000, typingKeepAliveMs: 5000 },
+  );
 
   return { agent, dispatcher, sessions, metrics, service, sendMessageMock };
 }

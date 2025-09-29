@@ -67,8 +67,8 @@ export async function createServer(options: ServerOptions): Promise<GatewayFasti
 
   await app.register(fastifyRateLimit as unknown as FastifyPluginAsync<RateLimitPluginOptions>, {
     global: false,
-    max: 60,
-    timeWindow: '1 minute',
+    max: options.config.rateLimit.max,
+    timeWindow: options.config.rateLimit.timeWindow,
   });
 
   app.addHook('onRequest', (request, reply, done) => {
@@ -100,10 +100,7 @@ export async function createServer(options: ServerOptions): Promise<GatewayFasti
     verifyToken: options.config.facebook.verifyToken,
     service: options.webhookService,
     metrics: options.metrics,
-    rateLimit: {
-      max: 60,
-      timeWindow: '1 minute',
-    },
+    rateLimit: options.config.rateLimit,
   });
 
   app.get('/metrics', async (_, reply) => {

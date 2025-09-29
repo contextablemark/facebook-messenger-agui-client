@@ -1,4 +1,3 @@
-import type { MessengerWebhookPayload } from '@agui/messaging-sdk';
 import type {
   FastifyInstance,
   FastifyRequest,
@@ -7,11 +6,14 @@ import type {
   RawRequestDefaultExpression,
   RawServerDefault,
 } from 'fastify';
+import { ZodError } from 'zod';
 
 import { VerificationTokenError } from '../errors';
 import type { MessengerWebhookService } from '../services/messenger/webhook-service';
 import type { AppLogger } from '../telemetry/logger';
 import type { GatewayMetrics } from '../telemetry/metrics';
+
+import { parseMessengerWebhookPayload } from './webhook-payload-schema';
 
 interface VerificationQuery {
   'hub.mode'?: string;
@@ -79,7 +81,7 @@ export async function registerWebhookRoutes(
     },
   );
 
-  app.post<{ Body: MessengerWebhookPayload }>(
+  app.post<{ Body: unknown }>(
     '/webhook',
     {
       config: {
@@ -94,9 +96,10 @@ export async function registerWebhookRoutes(
         const rawRequest = request as RawBodyRequest;
         const signature = (request.headers as Record<string, string>)['x-hub-signature-256'];
         const rawBody = rawRequest.rawBody ?? JSON.stringify(request.body ?? {});
+        const payload = parseMessengerWebhookPayload(request.body);
 
         const result = await context.service.handleWebhook({
-          payload: request.body,
+          payload,
           signatureHeader: signature,
           rawBody,
         });
@@ -104,9 +107,20 @@ export async function registerWebhookRoutes(
         context.metrics.requestCounter.inc({ method: request.method, status: '200' });
         return reply.code(200).send({ status: 'ok', receivedEvents: result.receivedEvents });
       } catch (error) {
-        statusCode = inferStatusCode(error);
+        let handledError = error;
+        if (error instanceof ZodError) {
+          const badRequest = Object.assign(new Error('Invalid Messenger webhook payload'), {
+            name: 'BadRequestError',
+            statusCode: 400,
+            cause: error,
+          });
+          statusCode = 400;
+          handledError = badRequest;
+        } else {
+          statusCode = inferStatusCode(error);
+        }
         context.metrics.requestCounter.inc({ method: request.method, status: String(statusCode) });
-        throw error;
+        throw handledError;
       } finally {
         stopTimer({ method: request.method, status: String(statusCode) });
       }

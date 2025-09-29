@@ -15,7 +15,13 @@ import type { GatewayMetrics } from '../../telemetry/metrics';
 import type { AguiDispatcher, AguiDispatchHandlers, DispatchContext } from '../agui';
 import { DEFAULT_SESSION_TTL_SECONDS, SessionData, SessionStore } from '../session';
 
-const MAX_MESSENGER_TEXT_LENGTH = 2000;
+/** Runtime parameters that tune Messenger webhook behaviour. */
+export interface MessengerWebhookServiceOptions {
+  /** Maximum number of characters allowed in a single Messenger message. */
+  maxTextLength: number;
+  /** Interval (ms) for refreshing typing indicators during long-running runs. */
+  typingKeepAliveMs: number;
+}
 
 export interface HandleWebhookInput {
   payload: MessengerWebhookPayload;
@@ -49,12 +55,15 @@ const SLASH_HELP_MESSAGE = [
  * outbound Send API interactions for the gateway.
  */
 export class MessengerWebhookService {
+  private readonly sessionLocks = new Map<string, Promise<void>>();
+
   constructor(
     private readonly agent: FacebookMessengerAgent,
     private readonly dispatcher: AguiDispatcher,
     private readonly sessions: SessionStore,
     private readonly metrics: GatewayMetrics,
     private readonly logger: AppLogger,
+    private readonly options: MessengerWebhookServiceOptions,
   ) {}
 
   /**
@@ -92,8 +101,19 @@ export class MessengerWebhookService {
     return { receivedEvents: events.length };
   }
 
-  /** Orchestrate dispatch, commands, and typing state for a session run. */
+  /**
+   * Serialise session processing so multiple events for the same conversation
+   * cannot stomp on persisted state or interleave AG-UI dispatches.
+   */
   private async processSession(
+    sessionId: string,
+    events: NormalizedMessengerEvent[],
+  ): Promise<void> {
+    await this.withSessionLock(sessionId, () => this.processSessionInternal(sessionId, events));
+  }
+
+  /** Orchestrate dispatch, commands, and typing state for a session run. */
+  private async processSessionInternal(
     sessionId: string,
     events: NormalizedMessengerEvent[],
   ): Promise<void> {
@@ -130,7 +150,7 @@ export class MessengerWebhookService {
     if (typingState.sent && participants.userId) {
       typingState.keepAlive = setInterval(() => {
         void this.sendTypingAction(participants.userId, 'typing_on', sessionId);
-      }, 5000);
+      }, this.options.typingKeepAliveMs);
     }
 
     const handlers = this.createDispatchHandlers(sessionId, participants, typingState);
@@ -337,7 +357,7 @@ export class MessengerWebhookService {
       return;
     }
 
-    const chunks = chunkText(text, MAX_MESSENGER_TEXT_LENGTH);
+    const chunks = chunkText(text, this.options.maxTextLength);
 
     for (const chunk of chunks) {
       const message: OutboundMessageInput = {
@@ -368,6 +388,31 @@ export class MessengerWebhookService {
       'Sorry, something went wrong while processing your request. Please try again.',
       'error',
     );
+  }
+
+  /**
+   * Execute the provided callback while holding an exclusive mutex for the
+   * Messenger session. This prevents interleaved reads/writes from concurrent
+   * webhook deliveries targeting the same user/page pair.
+   */
+  private async withSessionLock<T>(sessionId: string, task: () => Promise<T>): Promise<T> {
+    const previous = this.sessionLocks.get(sessionId) ?? Promise.resolve();
+    let release!: () => void;
+    const current = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const chain = previous.then(() => current);
+    this.sessionLocks.set(sessionId, chain);
+
+    await previous;
+    try {
+      return await task();
+    } finally {
+      release();
+      if (this.sessionLocks.get(sessionId) === chain) {
+        this.sessionLocks.delete(sessionId);
+      }
+    }
   }
 
   private async executeWithRetry<T>(operation: () => Promise<T>, attempts: number): Promise<T> {
@@ -412,7 +457,7 @@ function groupEventsBySession(
   return result;
 }
 
-function resolveSessionId(event: NormalizedMessengerEvent): string {
+export function resolveSessionId(event: NormalizedMessengerEvent): string {
   const message = event.message;
   if (message?.envelope?.senderId) {
     return message.envelope.senderId;
@@ -460,7 +505,7 @@ function resolveParticipants(
 }
 
 /** Split text into chunks no longer than the given Messenger limit. */
-function chunkText(text: string, maxLength: number): string[] {
+export function chunkText(text: string, maxLength: number): string[] {
   if (text.length <= maxLength) {
     return [text];
   }
