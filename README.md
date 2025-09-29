@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/contextablemark/facebook-messenger-agui-client/actions/workflows/ci.yml/badge.svg)](https://github.com/contextablemark/facebook-messenger-agui-client/actions/workflows/ci.yml)
 
-This repository contains the webhook gateway that connects Facebook Messenger to the AnySphere Graph UI (AG-UI) platform. The service validates incoming Facebook requests, normalises conversation events, forwards them to AG-UI, and delivers assistant responses back through the Messenger Send API with typing indicators, slash-command support, and structured telemetry.
+This repository contains the webhook gateway that connects Facebook Messenger to the Agent User Interface (AG-UI) protocol. The service validates incoming Facebook requests, normalises conversation events, forwards them to AG-UI, and delivers assistant responses back through the Messenger Send API with typing indicators, slash-command support, and structured telemetry.
 
 ## Repository Structure
 
@@ -58,6 +58,9 @@ Key variables include:
 - `AGUI_BASE_URL` / `AGUI_API_KEY` – Optional AG-UI endpoint and credentials
 - `SESSION_STORE_DRIVER` – `memory` (default) or `redis`
 - `REDIS_URL` – Required if `SESSION_STORE_DRIVER=redis`
+- `WEBHOOK_RATE_LIMIT_MAX` / `WEBHOOK_RATE_LIMIT_WINDOW` – Optional webhook rate limiting overrides
+- `MESSENGER_MAX_TEXT_LENGTH` – Maximum characters per outbound Messenger message (default 2000)
+- `MESSENGER_TYPING_KEEP_ALIVE_MS` – Typing indicator keep-alive interval in milliseconds (default 5000)
 
 ### Running the Gateway
 
@@ -98,4 +101,4 @@ When touching existing files, bring comments and documentation up to the standar
 
 ---
 
-Questions or deployment issues? Open an issue or ping the AG-UI platform team.
+Questions or deployment issues? Open an issue here and consult the AG-UI protocol spec for integration details.

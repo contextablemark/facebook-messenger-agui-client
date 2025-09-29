@@ -45,6 +45,10 @@ export async function createApplication(): Promise<Application> {
     sessionStore,
     metrics,
     logger,
+    {
+      maxTextLength: config.messenger.maxTextLength,
+      typingKeepAliveMs: config.messenger.typingKeepAliveMs,
+    },
   );
 
   const server = await createServer({

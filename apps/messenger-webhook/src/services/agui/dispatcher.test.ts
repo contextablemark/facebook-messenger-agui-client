@@ -137,4 +137,67 @@ describe('createAguiDispatcher', () => {
     });
     expect(handlers.onRunFinished).toHaveBeenCalledWith({ runId: 'run-1', threadId: 'user-123' });
   });
+
+  it('fails fast when the AG-UI stream contains consecutive parse errors', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: vi
+        .fn()
+        .mockResolvedValue(
+          'data: {"type":"RUN_STARTED","run_id":"run-1","thread_id":"user-123"}\n\n' +
+            'data: {"type": "TEXT_MESSAGE" invalid}\n\n'.repeat(3),
+        ),
+    });
+
+    const logger = {
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      info: vi.fn(),
+    } as unknown as AppLogger;
+
+    const dispatcher = createAguiDispatcher(logger, {
+      baseUrl: 'https://agui.example.com/agent/test-agent',
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      maxConsecutiveParseErrors: 3,
+    });
+
+    const events: NormalizedMessengerEvent[] = [
+      {
+        type: 'message',
+        entryId: 'entry-1',
+        timestamp: 1730000000000,
+        message: {
+          kind: 'text',
+          text: 'Hello from Messenger',
+          envelope: {
+            objectId: 'entry-1',
+            senderId: 'user-123',
+            recipientId: 'page-456',
+            timestamp: 1730000000000,
+            mid: 'mid-1',
+            isEcho: false,
+            metadata: undefined,
+          },
+        },
+        raw: {} as unknown as MessengerMessagingEvent,
+      },
+    ];
+
+    const handlers = {
+      onRunError: vi.fn(),
+    };
+
+    await expect(
+      dispatcher.dispatch(events, { sessionId: 'user-123', userId: 'user-123' }, handlers),
+    ).rejects.toThrow('Exceeded consecutive AG-UI SSE parse errors');
+
+    expect(handlers.onRunError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining('Exceeded consecutive AG-UI SSE parse errors'),
+      }),
+    );
+    expect(logger.warn).toHaveBeenCalledTimes(3);
+  });
 });

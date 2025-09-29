@@ -2,11 +2,11 @@
 
 ## Overview
 
-The Facebook Messenger integration enables AnySphere Graph to receive, process, and respond to messages from business-managed Messenger channels. The feature will expose a webhook endpoint that validates Facebook signatures, translate incoming payloads into the platform's unified message schema, and route outbound replies through Facebook's Send API. The integration must offer a fast developer onboarding experience with clear deployment paths for both local experimentation and production.
+The Facebook Messenger integration enables the Agent User Interface (AG-UI) protocol to receive, process, and respond to messages from business-managed Messenger channels. The feature will expose a webhook endpoint that validates Facebook signatures, translate incoming payloads into the protocol's unified message schema, and route outbound replies through Facebook's Send API. The integration must offer a fast developer onboarding experience with clear deployment paths for both local experimentation and production.
 
 ## Goals
 
-- Provide a reliable bridge between Facebook Messenger conversations and the AnySphere Graph messaging infrastructure.
+- Provide a reliable bridge between Facebook Messenger conversations and the Agent User Interface messaging infrastructure.
 - Ship a developer experience that works locally via Docker Compose and scales via a managed Railway deployment.
 - Document all configuration, deployment, and operational steps so support and solutions engineers can follow a repeatable playbook.
 
