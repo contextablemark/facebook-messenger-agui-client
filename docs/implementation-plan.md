@@ -22,7 +22,7 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 | ------------------------------------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **P0 – Repository Foundation**             | Week 1          | pnpm workspace, shared lint/test config, baseline CI smoke job, directory skeleton (`apps/`, `packages/`, `infra/railway/`, `docs/`). **Status:** ✅ Baseline scaffolding merged (2025-09-28). |
 | **P1 – Messenger Agent SDK**               | Weeks 2-3       | `FacebookMessengerAgent`, payload normalization utilities, signature helpers, unit tests, typedoc build. **Status:** ✅ Phase 1 delivered (2025-09-28).                                        |
-| **P2 – Gateway Service**                   | Weeks 3-5       | Fastify webhook endpoints, session store abstraction, AG-UI event translation, slash command support, structured logging + metrics.                                                            |
+| **P2 – Gateway Service**                   | Weeks 3-5       | Fastify webhook endpoints, session store abstraction, AG-UI event translation, slash command support, structured logging + metrics. **Status:** ✅ Completed (2025-09-29).                     |
 | **P3 – Configuration & Docs**              | Weeks 5-6       | `.env.example`, README quickstart, setup/deployment/troubleshooting guides, security checklist draft.                                                                                          |
 | **P4 – Railway Deployment & CI Hardening** | Weeks 6-7       | Dockerfile/compose parity, `infra/railway/railway.json`, Railway CLI workflow, deploy GitHub Action, release automation hooks.                                                                 |
 | **P5 – Final QA & Launch Prep**            | Week 8          | Local + Railway staging smoke tests, runbooks, observability validation, launch communications package.                                                                                        |
@@ -63,6 +63,12 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 - Translate AG-UI run events into Messenger actions (typing indicators, message sends, error fallbacks) and implement slash commands (`/reset`, `/help`).
 - Introduce session store abstraction with in-memory default and Redis adapter; document scaling considerations for Railway.
 - Add observability instrumentation (pino logs, Prometheus metrics exporter) and retries/backoff for Send API failures.
+
+**Future follow-ups:**
+
+- Extend AG-UI response translation once richer payload schemas (attachments, quick replies) are available.
+- Evaluate long-running typing indicator UX if Messenger clients restore reliable support.
+- Add end-to-end integration coverage for rate limiting and AG-UI error surfaces once the deployment environment stabilises.
 
 ### 4. Configuration & Security
 
@@ -106,15 +112,15 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 
 ## Status Tracking
 
-| Workstream              | Owner      | Status        | Notes                                                                             |
-| ----------------------- | ---------- | ------------- | --------------------------------------------------------------------------------- |
-| Repository foundation   |            | ✅ Done       | P0 scaffolding, tooling config, and CI workflow established.                      |
-| Messenger agent SDK     | Codex (AI) | ✅ Done       | Phase 1 agent, signature verification, normalization helpers, and unit tests.     |
-| Gateway service         |            | ☐ Not started |                                                                                   |
-| Docs & configuration    |            | ☐ Not started |                                                                                   |
-| CI/CD & Railway         |            | ☐ Not started |                                                                                   |
-| Testing & QA            | Codex (AI) | In progress   | Messaging SDK unit tests landed; integration and end-to-end suites still pending. |
-| Deployment & operations |            | ☐ Not started |                                                                                   |
+| Workstream              | Owner      | Status        | Notes                                                                                               |
+| ----------------------- | ---------- | ------------- | --------------------------------------------------------------------------------------------------- |
+| Repository foundation   |            | ✅ Done       | P0 scaffolding, tooling config, and CI workflow established.                                        |
+| Messenger agent SDK     | Codex (AI) | ✅ Done       | Phase 1 agent, signature verification, normalization helpers, and unit tests.                       |
+| Gateway service         |            | ✅ Done       | Webhook flow live with AG-UI dispatch, slash commands, metrics, and Messenger Send API integration. |
+| Docs & configuration    |            | ☐ Not started |                                                                                                     |
+| CI/CD & Railway         |            | ☐ Not started |                                                                                                     |
+| Testing & QA            | Codex (AI) | In progress   | Messaging SDK unit tests landed; integration and end-to-end suites still pending.                   |
+| Deployment & operations |            | ☐ Not started |                                                                                                     |
 
 ## Change Log
 

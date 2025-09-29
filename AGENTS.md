@@ -6,3 +6,5 @@
 - Place service applications under `apps/` and reusable libraries under `packages/`. Add or update a local README when creating a new top-level package or app.
 - Documentation updates belong under `docs/` unless they are scoped to a specific package, in which case place them beside the code and cross-link from the main docs set.
 - When adding scripts, favour `.mjs` or `.ts` modules over shell scripts for cross-platform compatibility unless POSIX shell is strictly necessary.
+- Deep reference material for AG-UI lives in the DeepWiki repo `ag-ui-protocol/ag-ui`; fetch protocol details there instead of guessing about the platform contracts.
+- Every source file must include clear, descriptive comments (module headers, class/function docblocks, tricky logic) that explain intent, inputs, and side effects to engineers who might not be familiar with the underlying frameworks. When you modify code, improve the surrounding documentation to meet this bar.
