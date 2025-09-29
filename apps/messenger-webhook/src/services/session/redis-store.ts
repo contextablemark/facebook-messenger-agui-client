@@ -33,7 +33,9 @@ export class RedisSessionStore implements SessionStore {
     } else {
       // Railway's managed Redis defaults to IPv6-only; forcing `family=0` lets ioredis
       // negotiate IPv4 instead of failing with `ERR This instance has cluster support disabled`.
-      const redisUrl = new URL(options.url);
+      // At this point options.url is guaranteed because we throw when both url and client are absent.
+      const rawUrl = options.url!;
+      const redisUrl = new URL(rawUrl);
       if (!redisUrl.searchParams.has('family')) {
         redisUrl.searchParams.set('family', '0');
       }
