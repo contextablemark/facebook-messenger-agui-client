@@ -29,53 +29,23 @@ This repository contains the webhook gateway that connects Facebook Messenger to
 
 ## Getting Started
 
-### Prerequisites
+The full local setup walkthrough lives in `docs/setup/local-development.md`. Quickstart:
 
-- Node.js ≥ 18.17
-- pnpm ≥ 8
-- Facebook App credentials (App Secret, Page Access Token, Verify Token)
-- (Optional) Redis instance for production session storage
+1. Install dependencies: `pnpm install`
+2. Copy the environment template: `cp .env.example .env`
+3. Fill in the Facebook secrets (`FB_APP_SECRET`, `FB_PAGE_ACCESS_TOKEN`, `FB_WEBHOOK_VERIFY_TOKEN`)
+4. Start the gateway: `pnpm run dev:webhook`
 
-### Installation
+The process loads `.env`, boots Fastify on `PORT` (defaults to `8080`), and exposes the webhook endpoints immediately. Prefer `pnpm exec tsx --env-file=.env apps/messenger-webhook/src/index.ts` if you need to run the entrypoint manually.
 
-```bash
-pnpm install
-```
-
-### Environment
-
-Copy `.env.example` to `.env` and populate the required variables:
-
-```bash
-cp .env.example .env
-```
-
-Key variables include:
-
-- `FB_APP_SECRET` – Messenger App secret used for signature validation
-- `FB_PAGE_ACCESS_TOKEN` – Page token used for Send API calls
-- `FB_WEBHOOK_VERIFY_TOKEN` – Verification token for the GET `/webhook` handshake
-- `AGUI_BASE_URL` / `AGUI_API_KEY` – Optional AG-UI endpoint and credentials
-- `SESSION_STORE_DRIVER` – `memory` (default) or `redis`
-- `REDIS_URL` – Required if `SESSION_STORE_DRIVER=redis`
-- `WEBHOOK_RATE_LIMIT_MAX` / `WEBHOOK_RATE_LIMIT_WINDOW` – Optional webhook rate limiting overrides
-- `MESSENGER_MAX_TEXT_LENGTH` – Maximum characters per outbound Messenger message (default 2000)
-- `MESSENGER_TYPING_KEEP_ALIVE_MS` – Typing indicator keep-alive interval in milliseconds (default 5000)
-
-### Running the Gateway
-
-```bash
-pnpm tsx --env-file=.env apps/messenger-webhook/src/index.ts
-```
-
-The server listens on `PORT` (default 8080) and exposes:
+### Runtime surface
 
 - `GET /webhook` – Facebook webhook verification
 - `POST /webhook` – Messenger event intake
 - `GET /healthz` – Health probe for infra checks
 - `GET /metrics` – Prometheus metrics
 
-### Tests & Linting
+### Tests & linting
 
 ```bash
 pnpm test      # Vitest suite
@@ -87,7 +57,12 @@ CI runs lint, type-check, and tests on every push via [GitHub Actions](https://g
 
 ## Deployment Notes
 
-The `infra/railway` directory contains deployment manifests for Railway. Ensure the environment variables from `.env.example` are configured in the target environment before promoting builds.
+Follow `docs/deployment/railway.md` and `infra/railway/README.md` when preparing staging or production services on Railway. Configure the environment variables from `.env.example` (or the Railway checklist) before promoting builds.
+
+## Troubleshooting & security
+
+- `docs/troubleshooting/messenger-webhook.md` – common debugging paths for webhook verification, Send API failures, and Redis issues.
+- `docs/security-checklist.md` – deployment-time security guardrails covering secrets, networking, and observability.
 
 ## Future Enhancements
 

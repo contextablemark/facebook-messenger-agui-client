@@ -23,7 +23,7 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 | **P0 – Repository Foundation**             | Week 1          | pnpm workspace, shared lint/test config, baseline CI smoke job, directory skeleton (`apps/`, `packages/`, `infra/railway/`, `docs/`). **Status:** ✅ Baseline scaffolding merged (2025-09-28). |
 | **P1 – Messenger Agent SDK**               | Weeks 2-3       | `FacebookMessengerAgent`, payload normalization utilities, signature helpers, unit tests, typedoc build. **Status:** ✅ Phase 1 delivered (2025-09-28).                                        |
 | **P2 – Gateway Service**                   | Weeks 3-5       | Fastify webhook endpoints, session store abstraction, AG-UI event translation, slash command support, structured logging + metrics. **Status:** ✅ Completed (2025-09-29).                     |
-| **P3 – Configuration & Docs**              | Weeks 5-6       | `.env.example`, README quickstart, setup/deployment/troubleshooting guides, security checklist draft.                                                                                          |
+| **P3 – Configuration & Docs**              | Weeks 5-6       | `.env.example`, README quickstart, setup/deployment/troubleshooting guides, security checklist draft. **Status:** ✅ Phase 3 documentation suite merged (2025-09-28).                          |
 | **P4 – Railway Deployment & CI Hardening** | Weeks 6-7       | Dockerfile/compose parity, `infra/railway/railway.json`, Railway CLI workflow, deploy GitHub Action, release automation hooks.                                                                 |
 | **P5 – Final QA & Launch Prep**            | Week 8          | Local + Railway staging smoke tests, runbooks, observability validation, launch communications package.                                                                                        |
 
@@ -72,8 +72,8 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 
 ### 4. Configuration & Security
 
-- Create `.env.example` detailing Facebook credentials, AG-UI endpoints, session store settings, Railway project/service IDs, and optional Redis URL.
-- Document secret management practices, TLS expectations, webhook signature validation, and rate-limit monitoring in `docs/SETUP.md` and runbooks.
+- Create `.env.example` detailing Facebook credentials, optional AG-UI endpoints, session store settings, and rate-limit tunables.
+- Document secret management practices, TLS expectations, webhook signature validation, and rate-limit monitoring in `docs/security-checklist.md` and related runbooks.
 - Build configuration drift detection (script comparing `.env` vs. Railway secrets) and integrate into CI warnings.
 
 ### 5. Tooling, CI/CD, and Release Automation
@@ -84,11 +84,11 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 
 ### 6. Documentation Suite
 
-- **README.md**: architecture overview, local setup, environment variable table, testing commands, deployment summary, and troubleshooting highlights.
-- **docs/SETUP.md**: Facebook Developer console walkthrough with webhook verification, secret management, and signature debugging tips.
-- **docs/DEPLOYMENT.md**: Docker Compose parity vs. Railway workflows, CLI commands (`railway link`, `railway up`, `railway deploy`, `railway rollback`), scaling, and logs access.
-- **docs/RUNBOOK.md**: incident response for webhook downtime, Send API failures, Redis outages, secrets rotation, and alert thresholds.
-- **docs/BLOG_OUTLINE.md**: storytelling plan covering problem statement, technical approach, Railway deployment narrative, and results.
+- **README.md**: architecture overview, quickstart, environment variable table, testing commands, deployment summary, and troubleshooting highlights.
+- **docs/setup/local-development.md**: Facebook Developer console setup notes, `.env` templating, Redis exercise, and local testing instructions.
+- **docs/deployment/railway.md**: manual Railway workflow, CLI commands (`railway link`, `railway up`, `railway variables set`), and post-deploy validation.
+- **docs/troubleshooting/messenger-webhook.md**: incident response for webhook downtime, Send API failures, Redis outages, secrets rotation, and alert thresholds.
+- **docs/security-checklist.md**: security guardrails covering secrets, networking, observability, and incident response expectations.
 
 ### 7. Testing & QA Strategy
 
@@ -112,20 +112,21 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 
 ## Status Tracking
 
-| Workstream              | Owner      | Status        | Notes                                                                                               |
-| ----------------------- | ---------- | ------------- | --------------------------------------------------------------------------------------------------- |
-| Repository foundation   |            | ✅ Done       | P0 scaffolding, tooling config, and CI workflow established.                                        |
-| Messenger agent SDK     | Codex (AI) | ✅ Done       | Phase 1 agent, signature verification, normalization helpers, and unit tests.                       |
-| Gateway service         |            | ✅ Done       | Webhook flow live with AG-UI dispatch, slash commands, metrics, and Messenger Send API integration. |
-| Docs & configuration    |            | ☐ Not started |                                                                                                     |
-| CI/CD & Railway         |            | ☐ Not started |                                                                                                     |
-| Testing & QA            | Codex (AI) | In progress   | Messaging SDK unit tests landed; integration and end-to-end suites still pending.                   |
-| Deployment & operations |            | ☐ Not started |                                                                                                     |
+| Workstream              | Owner      | Status        | Notes                                                                                                               |
+| ----------------------- | ---------- | ------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Repository foundation   |            | ✅ Done       | P0 scaffolding, tooling config, and CI workflow established.                                                        |
+| Messenger agent SDK     | Codex (AI) | ✅ Done       | Phase 1 agent, signature verification, normalization helpers, and unit tests.                                       |
+| Gateway service         |            | ✅ Done       | Webhook flow live with AG-UI dispatch, slash commands, metrics, and Messenger Send API integration.                 |
+| Docs & configuration    | Codex (AI) | ✅ Done       | Phase 3 delivered `.env.example`, README quickstart, setup/deployment/troubleshooting docs, and security checklist. |
+| CI/CD & Railway         |            | ☐ Not started |                                                                                                                     |
+| Testing & QA            | Codex (AI) | In progress   | Messaging SDK unit tests landed; integration and end-to-end suites still pending.                                   |
+| Deployment & operations |            | ☐ Not started |                                                                                                                     |
 
 ## Change Log
 
-| Date       | Author     | Summary                                                                                |
-| ---------- | ---------- | -------------------------------------------------------------------------------------- |
-| 2025-09-27 |            | Initial draft.                                                                         |
-| 2025-09-28 |            | Phase 0 scaffolding: pnpm workspace, tooling baselines, CI workflow.                   |
-| 2025-09-28 | Codex (AI) | Phase 1 delivers FacebookMessengerAgent, signature helpers, tests, and Typedoc script. |
+| Date       | Author     | Summary                                                                                    |
+| ---------- | ---------- | ------------------------------------------------------------------------------------------ |
+| 2025-09-27 |            | Initial draft.                                                                             |
+| 2025-09-28 |            | Phase 0 scaffolding: pnpm workspace, tooling baselines, CI workflow.                       |
+| 2025-09-28 | Codex (AI) | Phase 1 delivers FacebookMessengerAgent, signature helpers, tests, and Typedoc script.     |
+| 2025-09-28 | Codex (AI) | Phase 3 ships environment template, README quickstart, docs suite, and security checklist. |
