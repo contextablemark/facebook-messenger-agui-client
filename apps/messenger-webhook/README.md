@@ -1,6 +1,6 @@
 # Messenger Webhook Gateway
 
-The Messenger webhook gateway is a Fastify application that validates Facebook webhook calls, normalises payloads via `@agui/messaging-sdk`, and forwards structured events into AG-UI run workflows. Phase 2 introduces the production-ready skeleton so that additional capabilities (session persistence, slash commands, Railway deployment) can be layered in the following iterations.
+The Messenger webhook gateway is a Fastify application that validates Facebook webhook calls, normalises payloads via `@agui/messaging-sdk`, and forwards structured events into AG-UI run workflows. Phase 2 introduces the production-ready skeleton so that additional capabilities (session persistence, slash commands, Railway deployment) can be layered in the following iterations. Phase 3 adds configuration templates and operator documentation so local developers and platform engineers share the same setup guidance.
 
 ## Runtime Components
 
@@ -35,6 +35,8 @@ Environment variables (subject to refinement once AG-UI docs are confirmed):
 - `MESSENGER_MAX_TEXT_LENGTH` – cap for outbound message chunks (defaults to 2000 characters).
 - `MESSENGER_TYPING_KEEP_ALIVE_MS` – interval in milliseconds used to refresh typing indicators.
 
+The root `.env.example` file provides a populated template. See `docs/setup/local-development.md` for the local quickstart and `docs/deployment/railway.md` when promoting the service to Railway.
+
 ## Module Layout
 
 ```
@@ -53,3 +55,4 @@ apps/messenger-webhook/src
 2. Build slash command handling and outbound Send API flows that leverage the session store scaffolding.
 3. Wire the gateway into Docker Compose and Railway manifests, including Redis provisioning for non-memory deployments.
 4. Extend test coverage to the Fastify routes (verification handshake, metrics surfacing, and failure modes).
+5. Iterate on the docs in `docs/` as protocols evolve (e.g., security checklists, troubleshooting notes, deployment runbooks).

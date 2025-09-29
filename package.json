@@ -17,6 +17,7 @@
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "docs:messaging-sdk": "typedoc --options packages/messaging-sdk/typedoc.json",
+    "dev:webhook": "pnpm exec tsx --env-file=.env apps/messenger-webhook/src/index.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm test",
     "prepare": "husky install"
   },
@@ -30,6 +31,7 @@
     "husky": "^9.0.10",
     "lint-staged": "^15.2.2",
     "prettier": "^3.2.5",
+    "tsx": "^4.20.6",
     "typedoc": "^0.26.6",
     "typescript": "^5.4.2",
     "vitest": "^1.4.0"
