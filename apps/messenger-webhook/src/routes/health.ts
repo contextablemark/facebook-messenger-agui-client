@@ -1,5 +1,22 @@
-import type { FastifyInstance } from 'fastify';
+import type {
+  FastifyInstance,
+  FastifyTypeProviderDefault,
+  RawReplyDefaultExpression,
+  RawRequestDefaultExpression,
+  RawServerDefault,
+} from 'fastify';
 
-export async function registerHealthRoutes(app: FastifyInstance): Promise<void> {
+import type { AppLogger } from '../telemetry/logger';
+
+type HealthFastifyInstance = FastifyInstance<
+  RawServerDefault,
+  RawRequestDefaultExpression<RawServerDefault>,
+  RawReplyDefaultExpression<RawServerDefault>,
+  AppLogger,
+  FastifyTypeProviderDefault
+>;
+
+/** Register simple health/liveness endpoints (currently `/healthz`). */
+export async function registerHealthRoutes(app: HealthFastifyInstance): Promise<void> {
   app.get('/healthz', async () => ({ status: 'ok' }));
 }

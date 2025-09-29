@@ -13,6 +13,8 @@
     "noEmit": true,
     "types": ["node"],
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@agui/messaging-sdk": ["packages/messaging-sdk/src/index.ts"]
+    }
   }
 }

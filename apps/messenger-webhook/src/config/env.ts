@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+/**
+ * Zod schema describing the environment contract required for the gateway. It
+ * enforces required Messenger/AG-UI secrets, validates URLs, and normalises
+ * optional values like the HTTP port and session driver.
+ */
 const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
@@ -52,6 +57,11 @@ export interface AppConfig {
   logLevel?: string;
 }
 
+/**
+ * Parse and validate configuration from the provided environment source,
+ * returning a strongly typed settings object or throwing a descriptive error
+ * if any required variable is missing or malformed.
+ */
 export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
   const result = envSchema.safeParse(source);
 

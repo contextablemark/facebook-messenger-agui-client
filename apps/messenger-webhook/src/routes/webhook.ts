@@ -1,8 +1,16 @@
 import type { MessengerWebhookPayload } from '@agui/messaging-sdk';
-import type { FastifyInstance, FastifyRequest } from 'fastify';
+import type {
+  FastifyInstance,
+  FastifyRequest,
+  FastifyTypeProviderDefault,
+  RawReplyDefaultExpression,
+  RawRequestDefaultExpression,
+  RawServerDefault,
+} from 'fastify';
 
 import { VerificationTokenError } from '../errors';
 import type { MessengerWebhookService } from '../services/messenger/webhook-service';
+import type { AppLogger } from '../telemetry/logger';
 import type { GatewayMetrics } from '../telemetry/metrics';
 
 interface VerificationQuery {
@@ -25,8 +33,22 @@ export interface WebhookRouteContext {
   };
 }
 
+/**
+ * Register the Messenger webhook verification and event intake routes. Handles
+ * Facebook’s GET subscription handshake (echoing the challenge when the verify
+ * token matches) and the POST handler that performs signature validation,
+ * metrics collection, and delegation to the core webhook service.
+ */
+type WebhookFastifyInstance = FastifyInstance<
+  RawServerDefault,
+  RawRequestDefaultExpression<RawServerDefault>,
+  RawReplyDefaultExpression<RawServerDefault>,
+  AppLogger,
+  FastifyTypeProviderDefault
+>;
+
 export async function registerWebhookRoutes(
-  app: FastifyInstance,
+  app: WebhookFastifyInstance,
   context: WebhookRouteContext,
 ): Promise<void> {
   app.get<{ Querystring: VerificationQuery }>(
@@ -70,7 +92,7 @@ export async function registerWebhookRoutes(
 
       try {
         const rawRequest = request as RawBodyRequest;
-        const signature = request.headers['x-hub-signature-256'] as string | undefined;
+        const signature = (request.headers as Record<string, string>)['x-hub-signature-256'];
         const rawBody = rawRequest.rawBody ?? JSON.stringify(request.body ?? {});
 
         const result = await context.service.handleWebhook({
@@ -92,6 +114,10 @@ export async function registerWebhookRoutes(
   );
 }
 
+/**
+ * Translate known error shapes into HTTP status codes for metric tagging. Any
+ * unexpected error falls back to HTTP 500.
+ */
 function inferStatusCode(error: unknown): number {
   if (error && typeof error === 'object' && 'statusCode' in error) {
     const status = (error as { statusCode?: number }).statusCode;

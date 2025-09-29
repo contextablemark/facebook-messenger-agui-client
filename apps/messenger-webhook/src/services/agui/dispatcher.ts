@@ -4,6 +4,9 @@ import type { NormalizedMessengerEvent, NormalizedMessengerMessage } from '@agui
 
 import type { AppLogger } from '../../telemetry/logger';
 
+/**
+ * Metadata describing the Messenger session we are relaying AG-UI events for.
+ */
 export interface DispatchContext {
   sessionId: string;
   userId: string;
@@ -32,6 +35,7 @@ export interface AguiDispatchHandlers {
   onAssistantMessage?(payload: AssistantMessagePayload): void;
 }
 
+/** Contract implemented by dispatcher strategies used to forward events. */
 export interface AguiDispatcher {
   dispatch(
     events: NormalizedMessengerEvent[],
@@ -66,6 +70,10 @@ interface UserAgentMessage {
   name?: string;
 }
 
+/**
+ * Dispatcher used when no AG-UI endpoint is configured. It logs and surfaces
+ * errors without attempting any HTTP calls.
+ */
 class LoggingAguiDispatcher implements AguiDispatcher {
   constructor(private readonly logger: AppLogger) {}
 
@@ -91,6 +99,7 @@ class LoggingAguiDispatcher implements AguiDispatcher {
   }
 }
 
+/** Factory that chooses the appropriate dispatcher for the provided options. */
 export function createAguiDispatcher(
   logger: AppLogger,
   options: AguiDispatcherOptions = {},
@@ -102,6 +111,7 @@ export function createAguiDispatcher(
   return new HttpAguiDispatcher(logger, options);
 }
 
+/** Dispatcher that posts Messenger events to an AG-UI HTTP agent endpoint. */
 class HttpAguiDispatcher implements AguiDispatcher {
   private readonly baseUrl: string;
   private readonly apiKey?: string;
@@ -168,6 +178,7 @@ class HttpAguiDispatcher implements AguiDispatcher {
     }
   }
 
+  /** Turn Messenger events into an AG-UI RunAgentInput payload. */
   private buildRunInput(
     events: NormalizedMessengerEvent[],
     context: DispatchContext,
@@ -216,8 +227,8 @@ class HttpAguiDispatcher implements AguiDispatcher {
     };
   }
 
-  private buildHeaders(): HeadersInit {
-    const headers: HeadersInit = {
+  private buildHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Accept: 'text/event-stream',
     };
@@ -229,6 +240,10 @@ class HttpAguiDispatcher implements AguiDispatcher {
     return headers;
   }
 
+  /**
+   * Parse the SSE event stream produced by AG-UI and invoke handler callbacks
+   * for run lifecycle and assistant message content.
+   */
   private processEventStream(stream: string, handlers: AguiDispatchHandlers): void {
     if (!stream) {
       return;
@@ -396,6 +411,7 @@ class HttpAguiDispatcher implements AguiDispatcher {
   }
 }
 
+/** Convert a normalised Messenger message into a RunAgentInput user message. */
 function buildUserMessage(message: NormalizedMessengerMessage): UserAgentMessage | undefined {
   if (message.envelope.isEcho) {
     return undefined;
@@ -448,6 +464,7 @@ function buildUserMessage(message: NormalizedMessengerMessage): UserAgentMessage
   }
 }
 
+/** Convert Messenger postback data into a human-readable user message. */
 function buildPostbackContent(postback: { title?: string; payload?: string }): string {
   const parts: string[] = [];
   if (postback.title) {
@@ -459,6 +476,7 @@ function buildPostbackContent(postback: { title?: string; payload?: string }): s
   return parts.join('\n') || 'Postback received';
 }
 
+/** Safely attempt to read the response body for error reporting. */
 async function safeRead(response: Response): Promise<string> {
   try {
     return await response.text();
@@ -467,18 +485,22 @@ async function safeRead(response: Response): Promise<string> {
   }
 }
 
+/** Normalise URLs by removing any trailing slash. */
 function trimTrailingSlash(value: string): string {
   return value.replace(/\/$/, '');
 }
 
+/** Helper that returns the string value or `undefined` for non-strings. */
 function asString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
+/** Determine whether an event role indicates an assistant speaker. */
 function isAssistant(role: unknown): boolean {
   return typeof role === 'string' && role.toLowerCase() === 'assistant';
 }
 
+/** Extract text content from AG-UI text delta payloads. */
 function extractDelta(delta: unknown): string {
   if (delta === undefined || delta === null) {
     return '';

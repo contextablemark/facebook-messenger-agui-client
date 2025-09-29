@@ -11,6 +11,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   });
 }
 
+/** CLI entrypoint used when running the gateway directly. */
 async function bootstrap(): Promise<void> {
   const app = await createApplication();
 

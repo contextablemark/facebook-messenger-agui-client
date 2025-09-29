@@ -8,12 +8,14 @@ import {
   SessionStoreContext,
 } from './store';
 
+/** Options used to configure the Redis-backed session store. */
 export interface RedisSessionStoreOptions extends SessionStoreContext {
   url?: string;
   client?: RedisClient;
   defaultTtlSeconds?: number;
 }
 
+/** Session store implementation backed by Redis. */
 export class RedisSessionStore implements SessionStore {
   private readonly redis: RedisClient;
   private readonly prefix: string;

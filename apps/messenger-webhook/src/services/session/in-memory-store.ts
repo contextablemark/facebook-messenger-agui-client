@@ -6,11 +6,13 @@ import {
   SessionStoreContext,
 } from './store';
 
+/** Representation of a cached session entry with expiry metadata. */
 interface MemoryEntry {
   value: SessionData;
   expiresAt: number;
 }
 
+/** Simple Map-based session store used for local development. */
 export class InMemorySessionStore implements SessionStore {
   private readonly store = new Map<SessionKey, MemoryEntry>();
   private readonly prefix: string;

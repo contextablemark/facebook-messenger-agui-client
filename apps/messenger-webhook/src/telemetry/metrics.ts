@@ -14,6 +14,7 @@ export interface MetricsOptions {
   registry?: Registry;
 }
 
+/** Initialise Prometheus metrics used for observability dashboards. */
 export function createMetrics(options: MetricsOptions = {}): GatewayMetrics {
   const registry = options.registry ?? new Registry();
   const prefix = options.prefix ?? 'messenger_gateway_';

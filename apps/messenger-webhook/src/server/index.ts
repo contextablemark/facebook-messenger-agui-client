@@ -1,1 +1,1 @@
-export { createServer, type ServerOptions } from './create-server';
+export { createServer, type ServerOptions, type GatewayFastifyInstance } from './create-server';

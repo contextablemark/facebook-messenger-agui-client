@@ -1,3 +1,4 @@
+/** Error thrown when the Facebook request signature check fails. */
 export class SignatureVerificationError extends Error {
   readonly statusCode = 403;
 
@@ -7,6 +8,7 @@ export class SignatureVerificationError extends Error {
   }
 }
 
+/** Raised when Facebook's GET verification request specifies an invalid token. */
 export class VerificationTokenError extends Error {
   readonly statusCode = 403;
 
@@ -16,6 +18,7 @@ export class VerificationTokenError extends Error {
   }
 }
 
+/** Wraps failures that occur while relaying events to AG-UI. */
 export class DispatchError extends Error {
   readonly statusCode = 502;
 

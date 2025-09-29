@@ -1,6 +1,13 @@
 import helmet from '@fastify/helmet';
-import rateLimit from '@fastify/rate-limit';
-import Fastify, { type FastifyInstance } from 'fastify';
+import fastifyRateLimit, { type RateLimitPluginOptions } from '@fastify/rate-limit';
+import Fastify, {
+  type FastifyInstance,
+  type FastifyPluginAsync,
+  type FastifyTypeProviderDefault,
+  type RawReplyDefaultExpression,
+  type RawRequestDefaultExpression,
+  type RawServerDefault,
+} from 'fastify';
 
 import type { AppConfig } from '../config';
 import { registerHealthRoutes } from '../routes/health';
@@ -13,6 +20,14 @@ type RawBodyRequest = {
   rawBody?: Buffer;
 };
 
+export type GatewayFastifyInstance = FastifyInstance<
+  RawServerDefault,
+  RawRequestDefaultExpression<RawServerDefault>,
+  RawReplyDefaultExpression<RawServerDefault>,
+  AppLogger,
+  FastifyTypeProviderDefault
+>;
+
 export interface ServerOptions {
   config: AppConfig;
   logger: AppLogger;
@@ -20,7 +35,12 @@ export interface ServerOptions {
   webhookService: MessengerWebhookService;
 }
 
-export async function createServer(options: ServerOptions): Promise<FastifyInstance> {
+/**
+ * Build and configure the Fastify HTTP server responsible for exposing
+ * Messenger webhook endpoints, health checks, metrics, and the operational
+ * middleware (helmet, rate limiting, correlation IDs).
+ */
+export async function createServer(options: ServerOptions): Promise<GatewayFastifyInstance> {
   const app = Fastify({
     logger: options.logger,
     disableRequestLogging: options.config.env === 'production',
@@ -45,17 +65,10 @@ export async function createServer(options: ServerOptions): Promise<FastifyInsta
     global: true,
   });
 
-  await app.register(rateLimit, {
+  await app.register(fastifyRateLimit as unknown as FastifyPluginAsync<RateLimitPluginOptions>, {
     global: false,
-    addHeadersOnExceeding: {
-      'x-rate-limit': false,
-      'retry-after': true,
-    },
-    addHeaders: {
-      'x-rate-limit-limit': true,
-      'x-rate-limit-remaining': true,
-      'x-rate-limit-reset': true,
-    },
+    max: 60,
+    timeWindow: '1 minute',
   });
 
   app.addHook('onRequest', (request, reply, done) => {
@@ -98,5 +111,5 @@ export async function createServer(options: ServerOptions): Promise<FastifyInsta
     return reply.type('text/plain').send(payload);
   });
 
-  return app;
+  return app as GatewayFastifyInstance;
 }

@@ -32,6 +32,7 @@ interface Participants {
   pageId?: string;
 }
 
+/** Records typing indicator state for the active Messenger session. */
 interface TypingState {
   sent: boolean;
   keepAlive?: NodeJS.Timeout;
@@ -43,6 +44,10 @@ const SLASH_HELP_MESSAGE = [
   '/reset – clear the current session and start fresh',
 ].join('\n');
 
+/**
+ * Coordinates webhook intake, AG-UI dispatch, Messenger session state, and
+ * outbound Send API interactions for the gateway.
+ */
 export class MessengerWebhookService {
   constructor(
     private readonly agent: FacebookMessengerAgent,
@@ -52,6 +57,10 @@ export class MessengerWebhookService {
     private readonly logger: AppLogger,
   ) {}
 
+  /**
+   * Validate the request signature, normalise events, and enqueue processing
+   * for each conversation represented in the webhook payload.
+   */
   async handleWebhook(input: HandleWebhookInput): Promise<HandleWebhookResult> {
     const rawBody = toBuffer(input.rawBody);
 
@@ -83,6 +92,7 @@ export class MessengerWebhookService {
     return { receivedEvents: events.length };
   }
 
+  /** Orchestrate dispatch, commands, and typing state for a session run. */
   private async processSession(
     sessionId: string,
     events: NormalizedMessengerEvent[],
@@ -147,6 +157,7 @@ export class MessengerWebhookService {
     }
   }
 
+  /** Persist metadata about the Messenger conversation for future runs. */
   private async persistSession(
     sessionId: string,
     existing: SessionData | undefined,
@@ -168,6 +179,10 @@ export class MessengerWebhookService {
     }
   }
 
+  /**
+   * Build handlers that react to AG-UI run updates and forward them back to
+   * Messenger while maintaining typing state.
+   */
   private createDispatchHandlers(
     sessionId: string,
     participants: Participants,
@@ -212,6 +227,7 @@ export class MessengerWebhookService {
     };
   }
 
+  /** Filter out slash commands while recording whether any were handled. */
   private async filterSlashCommands(
     sessionId: string,
     userId: string | undefined,
@@ -234,6 +250,7 @@ export class MessengerWebhookService {
     return { dispatchable, handledCommand: handled };
   }
 
+  /** Execute built-in slash command behaviour for the given text message. */
   private async tryHandleSlashCommand(
     sessionId: string,
     userId: string | undefined,
@@ -277,6 +294,7 @@ export class MessengerWebhookService {
     }
   }
 
+  /** Increment failure metrics and notify the user when AG-UI dispatch fails. */
   private async handleDispatchFailure(userId: string | undefined): Promise<void> {
     this.metrics.dispatchFailures.inc();
     if (userId) {
@@ -284,6 +302,7 @@ export class MessengerWebhookService {
     }
   }
 
+  /** Send a Messenger sender action (typing_on/off or mark_seen). */
   private async sendTypingAction(
     recipientId: string | undefined,
     action: 'typing_on' | 'typing_off' | 'mark_seen',
@@ -308,6 +327,7 @@ export class MessengerWebhookService {
     }
   }
 
+  /** Send a text payload to Messenger, splitting messages that exceed limits. */
   private async sendTextMessage(
     recipientId: string | undefined,
     text: string,
@@ -341,6 +361,7 @@ export class MessengerWebhookService {
     }
   }
 
+  /** Notify the user of a generic processing error. */
   private async sendErrorMessage(recipientId: string): Promise<void> {
     await this.sendTextMessage(
       recipientId,
@@ -438,6 +459,7 @@ function resolveParticipants(
   };
 }
 
+/** Split text into chunks no longer than the given Messenger limit. */
 function chunkText(text: string, maxLength: number): string[] {
   if (text.length <= maxLength) {
     return [text];
@@ -466,6 +488,7 @@ function chunkText(text: string, maxLength: number): string[] {
   return chunks;
 }
 
+/** Promise that resolves after the supplied number of milliseconds. */
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
