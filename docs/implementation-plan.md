@@ -76,6 +76,12 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 - Document secret management practices, TLS expectations, webhook signature validation, and rate-limit monitoring in `docs/security-checklist.md` and related runbooks.
 - Build configuration drift detection (script comparing `.env` vs. Railway secrets) and integrate into CI warnings.
 
+#### Phase 3 Execution Notes (2025-09-28)
+
+- Shipped refreshed `.env.example` alongside local and hosted docs so developers and operators share the same baseline configuration checklist.
+- Authored `docs/setup/local-development.md`, `docs/deployment/railway.md`, and `docs/troubleshooting/messenger-webhook.md` to cover quickstart, deployment, and incident response flows.
+- Added a security checklist documenting secrets management, hardening expectations, and incident response guardrails to gate production launches.
+
 ### 5. Tooling, CI/CD, and Release Automation
 
 - Extend CI with job stages for lint/typecheck/unit tests, Docker image build, and artifact caching for Railway deploys.
