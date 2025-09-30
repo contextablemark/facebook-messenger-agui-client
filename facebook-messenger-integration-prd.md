@@ -87,10 +87,10 @@ The Facebook Messenger integration enables the Agent User Interface (AG-UI) prot
 ### Detailed Workstreams
 
 1. **Repository Initialization**
-   - Scaffold pnpm workspace (`package.json`, `pnpm-workspace.yaml`) covering `apps/messenger-webhook`, `packages/messaging-sdk`, and shared tooling.
+   - Scaffold pnpm workspace (`package.json`, `pnpm-workspace.yaml`) covering `apps/messenger-webhook`, `packages/fb-messenger`, `packages/core`, and shared tooling.
    - Establish shared TypeScript configs, ESLint/Prettier rules, Husky pre-commit hooks, and Changesets configuration for eventual package releases.
    - Author base GitHub Action (`.github/workflows/ci.yml`) that runs lint, type-check, and tests on Node 18/20 with caching and coverage upload.
-2. **Messenger Agent Package (`packages/messaging-sdk`)**
+2. **Messenger Agent Package (`packages/fb-messenger`)**
    - Implement `FacebookMessengerAgent` extending AG-UI HTTP abstractions with helpers for text, attachments, and quick reply normalization.
    - Provide signature verification utilities and thread/session metadata mappers to share across services.
    - Achieve near-100% unit test coverage for payload transforms, signature validation, and error handling.

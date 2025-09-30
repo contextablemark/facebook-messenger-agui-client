@@ -21,7 +21,7 @@ pnpm verify   # lint + typecheck + test
 If you added new API surface in the SDK, regenerate the Typedoc site so the published docs stay in sync:
 
 ```bash
-pnpm docs:messaging-sdk
+pnpm docs:fb-messenger
 ```
 
 ## 2. Build artefact (temporary process)

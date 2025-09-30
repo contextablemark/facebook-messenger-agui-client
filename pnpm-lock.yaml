@@ -56,8 +56,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/fb-messenger
       '@fastify/helmet':
-        specifier: ^10.1.1
-        version: 10.1.1
+        specifier: ^11.1.1
+        version: 11.1.1
       '@fastify/rate-limit':
         specifier: ^8.1.1
         version: 8.1.1
@@ -614,10 +614,10 @@ packages:
         integrity: sha512-aZAXGYo6m22Fk1zZzEUKBvut/CIIQe/BapEORnxiD5Qr0kPHqqI69NtEMCme74h+at72sPhbkb4ZrLd1W3KRLA==,
       }
 
-  '@fastify/helmet@10.1.1':
+  '@fastify/helmet@11.1.1':
     resolution:
       {
-        integrity: sha512-z9abyIlCHPU25llOTyo3uz8F8TJ+uDqtOC4+38dxODPw8Ro9sTZjbm2U7ZIF0IAv3/E0ke6vbUQ4sB376WuKJA==,
+        integrity: sha512-pjJxjk6SLEimITWadtYIXt6wBMfFC1I6OQyH/jYVCqSAn36sgAIFjeNiibHtifjCd+e25442pObis3Rjtame6A==,
       }
 
   '@fastify/merge-json-schemas@0.1.1':
@@ -2169,12 +2169,12 @@ packages:
         integrity: sha512-88JUN06ipLwsnv+dVn+OIYOvAuvBMy/Qoi6O7mQHxdPXpjy+Cd6xRkWwux7DKO+4sYILtLBRIKgsdpS2gQc7qw==,
       }
 
-  helmet@6.2.0:
+  helmet@7.2.0:
     resolution:
       {
-        integrity: sha512-DWlwuXLLqbrIOltR6tFQXShj/+7Cyp0gLi6uAb8qMdFh/YBBFbKSgQ6nbXmScYd8emMctuthmgIa7tUfo9Rtyg==,
+        integrity: sha512-ZRiwvN089JfMXokizgqEPXsl2Guk094yExfoDXR0cBYWxtBbaSww/w+vT4WEJsBW2iTUi1GgZ6swmoug3Oy4Xw==,
       }
-    engines: { node: '>=14.0.0' }
+    engines: { node: '>=16.0.0' }
 
   html-void-elements@3.0.0:
     resolution:
@@ -4166,10 +4166,10 @@ snapshots:
     dependencies:
       fast-json-stringify: 5.16.1
 
-  '@fastify/helmet@10.1.1':
+  '@fastify/helmet@11.1.1':
     dependencies:
       fastify-plugin: 4.5.1
-      helmet: 6.2.0
+      helmet: 7.2.0
 
   '@fastify/merge-json-schemas@0.1.1':
     dependencies:
@@ -5256,7 +5256,7 @@ snapshots:
     dependencies:
       '@types/hast': 3.0.4
 
-  helmet@6.2.0: {}
+  helmet@7.2.0: {}
 
   html-void-elements@3.0.0: {}
 

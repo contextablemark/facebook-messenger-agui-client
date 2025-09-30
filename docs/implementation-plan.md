@@ -31,7 +31,7 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 
 ### 1. Repository Initialization
 
-- Scaffold pnpm workspace (`package.json`, `pnpm-workspace.yaml`) covering `apps/messenger-webhook`, `packages/messaging-sdk`, and shared tooling.
+- Scaffold pnpm workspace (`package.json`, `pnpm-workspace.yaml`) covering `apps/messenger-webhook`, `packages/fb-messenger`, `packages/core`, and shared tooling.
 - Establish shared TypeScript configs, ESLint/Prettier rules, Husky pre-commit hooks, and Changesets configuration for eventual package releases.
 - Author base GitHub Action (`.github/workflows/ci.yml`) that runs lint, type-check, and tests on Node 18/20 with caching and coverage upload.
 
@@ -39,10 +39,10 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 
 - Created pnpm workspace scaffolding with repo-level `package.json`, `pnpm-workspace.yaml`, and baseline scripts for linting, testing, and formatting.
 - Added shared tooling configuration: `tsconfig.base.json`, `tsconfig.build.json`, ESLint, Prettier, Vitest, and Husky with lint-staged integration.
-- Established directory skeleton for `apps/messenger-webhook`, `packages/messaging-sdk`, `infra/railway/`, and `scripts/`, including placeholder READMEs for the app and SDK packages.
+- Established directory skeleton for `apps/messenger-webhook`, `packages/fb-messenger`, `packages/core`, `infra/railway/`, and `scripts/`, including placeholder READMEs for the app and SDK packages.
 - Authored CI workflow (`.github/workflows/ci.yml`) covering lint, type-check, and test jobs on Node 18.x and 20.x using pnpm caching.
 
-### 2. Messenger Agent Package (`packages/messaging-sdk`)
+### 2. Messenger Agent Package (`packages/fb-messenger`)
 
 - Implement `FacebookMessengerAgent` extending AG-UI HTTP abstractions with helpers for text, attachments, and quick reply normalization.
 - Provide signature verification utilities and thread/session metadata mappers to share across services.
@@ -54,7 +54,7 @@ This document expands the Facebook Messenger integration PRD into an actionable 
 - Delivered `FacebookMessengerAgent` with outbound Send API orchestration, signature verification, webhook normalization entry points, and rich error propagation.
 - Factored reusable utilities (`normalizeWebhookPayload`, message/quick reply builders, signature helpers) exposed through the messaging SDK for downstream services.
 - Added comprehensive unit tests covering agent behaviours, normalization branches, and signature validation edge cases to lock in regression protection.
-- Wired Typedoc generation via `pnpm docs:messaging-sdk`, publishing static docs under `docs/reference/messaging-sdk` for consumer reference.
+- Wired Typedoc generation via `pnpm docs:fb-messenger`, publishing static docs under `docs/reference/fb-messenger` for consumer reference.
 
 ### 3. Messenger Gateway Service (`apps/messenger-webhook`)
 

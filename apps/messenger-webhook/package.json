@@ -7,7 +7,7 @@
   "main": "src/index.ts",
   "dependencies": {
     "@agui-gw/fb-messenger": "workspace:*",
-    "@fastify/helmet": "^10.1.1",
+    "@fastify/helmet": "^11.1.1",
     "@fastify/rate-limit": "^8.1.1",
     "fastify": "^4.26.2",
     "ioredis": "^5.3.2",
