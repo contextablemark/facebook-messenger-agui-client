@@ -14,7 +14,8 @@
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@agui/messaging-sdk": ["packages/messaging-sdk/src/index.ts"]
+      "@agui/messaging-sdk": ["packages/messaging-sdk/src/index.ts"],
+      "@agui-gw/core": ["packages/gateway-core/src/index.ts"]
     }
   }
 }

@@ -9,15 +9,23 @@ This repository contains the webhook gateway that connects Facebook Messenger to
 ```
 .
 ├── apps
-│   └── messenger-webhook    # Fastify service that bridges Messenger and AG-UI
+│   └── messenger-webhook    # @agui-gw/fb-messenger Fastify service that bridges Messenger and AG-UI
 ├── docs                     # Product and implementation plans, reference docs
 ├── infra                    # Deployment definitions (e.g., Railway)
 ├── packages
+│   ├── gateway-core         # Shared gateway dispatcher built on the AG-UI SDK
 │   └── messaging-sdk        # SDK shared by gateway and future services
 └── .github/workflows        # CI configuration (lint, type-check, tests)
 ```
 
 ## Features
+
+### AG-UI SDK integration
+
+- The gateway now depends on the official AG-UI SDK packages (`@ag-ui/core`, `@ag-ui/client`, `@ag-ui/encoder`, `@ag-ui/proto`) published by the platform team.
+- Shared dispatcher logic lives in `@agui-gw/core`, ensuring all applications consume the same request builders and event handlers.
+
+### Messenger gateway highlights
 
 - ✅ Signature verification and webhook verification handshake for Facebook Messenger
 - ✅ Normalisation of Messenger events and dispatch to AG-UI via RunAgentInput

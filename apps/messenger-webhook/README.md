@@ -7,7 +7,7 @@ The Messenger webhook gateway is a Fastify application that validates Facebook w
 - **Fastify server** – exposes public webhook endpoints and an internal health probe, manages lifecycle hooks, and hosts shared plugins (logging, metrics, rate limiting).
 - **Messenger guard** – verifies `X-Hub-Signature-256` headers with the Facebook App secret before any payload processing occurs.
 - **Event normaliser** – converts Messenger payloads to `NormalizedMessengerEvent` objects using the Phase 1 SDK helpers.
-- **AG-UI dispatcher** – adapts normalised events into AG-UI run invocations (exact contract defined in the AG-UI protocol spec). Outbound responses flow back through the Messenger Send API helper in the SDK.
+- **AG-UI dispatcher** – adapts normalised events into AG-UI run invocations via `@agui-gw/core`, which wraps the official `@ag-ui/core`, `@ag-ui/client`, `@ag-ui/encoder`, and `@ag-ui/proto` packages. Outbound responses flow back through the Messenger Send API helper in the SDK.
 - **Session store abstraction** – in-memory store for local use and Redis-backed implementation for Railway deployments, enabling slash commands and idempotency guarantees.
 - **Telemetry** – structured logging through Pino and a Prometheus metrics registry for request volume, latency, and failure counts.
 
@@ -50,6 +50,8 @@ apps/messenger-webhook/src
 ```
 
 ## Next Steps
+
+> ℹ️ The gateway now consumes the official AG-UI SDK packages directly so contributors stay aligned with the upstream protocol contracts. The dispatcher defers to the SDK's canonical request builders and event handlers to remain protocol-compliant.
 
 1. Validate the AG-UI streaming response handling and surface actionable status/log events to Messenger clients.
 2. Build slash command handling and outbound Send API flows that leverage the session store scaffolding.
