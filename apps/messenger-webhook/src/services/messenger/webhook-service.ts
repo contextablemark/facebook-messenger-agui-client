@@ -6,8 +6,8 @@ import type {
   NormalizedMessengerMessage,
   OutboundMessageInput,
   SendMessageCommand,
-} from '@agui/messaging-sdk';
-import { FacebookMessengerAgent } from '@agui/messaging-sdk';
+} from '@agui-gw/fb-messenger';
+import { FacebookMessengerAgent } from '@agui-gw/fb-messenger';
 
 import { DispatchError, SignatureVerificationError } from '../../errors';
 import type { AppLogger } from '../../telemetry/logger';

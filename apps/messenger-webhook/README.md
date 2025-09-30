@@ -1,6 +1,6 @@
 # Messenger Webhook Gateway
 
-The Messenger webhook gateway is a Fastify application that validates Facebook webhook calls, normalises payloads via `@agui/messaging-sdk`, and forwards structured events into AG-UI run workflows. Phase 2 introduces the production-ready skeleton so that additional capabilities (session persistence, slash commands, Railway deployment) can be layered in the following iterations. Phase 3 adds configuration templates and operator documentation so local developers and platform engineers share the same setup guidance.
+The Messenger webhook gateway is a Fastify application that validates Facebook webhook calls, normalises payloads via `@agui-gw/fb-messenger`, and forwards structured events into AG-UI run workflows. Phase 2 introduces the production-ready skeleton so that additional capabilities (session persistence, slash commands, Railway deployment) can be layered in the following iterations. Phase 3 adds configuration templates and operator documentation so local developers and platform engineers share the same setup guidance.
 
 ## Runtime Components
 

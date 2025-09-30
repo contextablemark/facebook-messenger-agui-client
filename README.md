@@ -9,12 +9,12 @@ This repository contains the webhook gateway that connects Facebook Messenger to
 ```
 .
 ├── apps
-│   └── messenger-webhook    # @agui-gw/fb-messenger Fastify service that bridges Messenger and AG-UI
+│   └── messenger-webhook    # @agui-gw/messenger-webhook Fastify service that bridges Messenger and AG-UI
 ├── docs                     # Product and implementation plans, reference docs
 ├── infra                    # Deployment definitions (e.g., Railway)
 ├── packages
-│   ├── gateway-core         # Shared gateway dispatcher built on the AG-UI SDK
-│   └── messaging-sdk        # SDK shared by gateway and future services
+│   ├── core                 # Shared gateway dispatcher built on the AG-UI SDK
+│   └── fb-messenger         # SDK shared by gateway and future services
 └── .github/workflows        # CI configuration (lint, type-check, tests)
 ```
 

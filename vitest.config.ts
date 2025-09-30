@@ -21,8 +21,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@agui/messaging-sdk': resolvePath('packages/messaging-sdk/src/index.ts'),
-      '@agui-gw/core': resolvePath('packages/gateway-core/src/index.ts'),
+      '@agui-gw/fb-messenger': resolvePath('packages/fb-messenger/src/index.ts'),
+      '@agui-gw/core': resolvePath('packages/core/src/index.ts'),
     },
   },
 });

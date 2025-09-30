@@ -1,4 +1,4 @@
-import type { MessengerWebhookPayload } from '@agui/messaging-sdk';
+import type { MessengerWebhookPayload } from '@agui-gw/fb-messenger';
 import { z } from 'zod';
 
 /**

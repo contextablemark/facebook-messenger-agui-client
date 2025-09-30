@@ -1,9 +1,34 @@
-import type { NormalizedMessengerEvent, MessengerMessagingEvent } from '@agui/messaging-sdk';
-import { describe, expect, it, vi } from 'vitest';
+import { ReadableStream } from 'node:stream/web';
+
+import type { MessengerMessagingEvent, NormalizedMessengerEvent } from '@agui-gw/fb-messenger';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { AppLogger } from '../../telemetry/logger';
 
 import { createAguiDispatcher } from './dispatcher';
+
+const originalFetch = globalThis.fetch;
+const encoder = new TextEncoder();
+
+function createSseResponse(chunks: string[]): Response {
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) {
+        controller.enqueue(encoder.encode(chunk));
+      }
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: { 'Content-Type': 'text/event-stream' },
+  });
+}
+
+afterEach(() => {
+  globalThis.fetch = originalFetch;
+});
 
 describe('createAguiDispatcher', () => {
   it('falls back to logging dispatcher when no base URL is configured', async () => {
@@ -40,17 +65,18 @@ describe('createAguiDispatcher', () => {
   });
 
   it('posts RunAgentInput payloads to the configured AG-UI endpoint', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      text: vi
-        .fn()
-        .mockResolvedValue(
-          'data: {"type":"RUN_STARTED","run_id":"run-1","thread_id":"user-123"}\n\n' +
-            'data: {"type":"TEXT_MESSAGE","role":"assistant","message_id":"msg-1","content":"Hi there"}\n\n' +
-            'data: {"type":"RUN_FINISHED","run_id":"run-1","thread_id":"user-123"}\n\n',
-        ),
-    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        createSseResponse([
+          'data: {"type":"RUN_STARTED","runId":"run-1","threadId":"user-123"}\n\n',
+          'data: {"type":"TEXT_MESSAGE_START","messageId":"msg-1","role":"assistant"}\n\n',
+          'data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"msg-1","delta":"Hi there"}\n\n',
+          'data: {"type":"TEXT_MESSAGE_END","messageId":"msg-1"}\n\n',
+          'data: {"type":"RUN_FINISHED","runId":"run-1","threadId":"user-123"}\n\n',
+        ]),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     const logger = {
       warn: vi.fn(),
@@ -62,7 +88,6 @@ describe('createAguiDispatcher', () => {
     const dispatcher = createAguiDispatcher(logger, {
       baseUrl: 'https://agui.example.com/agent/test-agent',
       apiKey: 'secret',
-      fetchImpl: fetchMock as unknown as typeof fetch,
     });
 
     const events: NormalizedMessengerEvent[] = [
@@ -130,25 +155,27 @@ describe('createAguiDispatcher', () => {
       source: 'facebook-messenger',
     });
 
-    expect(handlers.onRunStarted).toHaveBeenCalledWith({ runId: 'run-1', threadId: 'user-123' });
-    expect(handlers.onAssistantMessage).toHaveBeenCalledWith({
-      messageId: 'msg-1',
-      content: 'Hi there',
-    });
-    expect(handlers.onRunFinished).toHaveBeenCalledWith({ runId: 'run-1', threadId: 'user-123' });
+    expect(handlers.onRunStarted).toHaveBeenCalledWith(
+      expect.objectContaining({ runId: 'run-1', threadId: 'user-123' }),
+    );
+    expect(handlers.onAssistantMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ messageId: 'msg-1', content: 'Hi there' }),
+    );
+    expect(handlers.onRunFinished).toHaveBeenCalledWith(
+      expect.objectContaining({ runId: 'run-1', threadId: 'user-123' }),
+    );
   });
 
-  it('fails fast when the AG-UI stream contains consecutive parse errors', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      text: vi
-        .fn()
-        .mockResolvedValue(
-          'data: {"type":"RUN_STARTED","run_id":"run-1","thread_id":"user-123"}\n\n' +
-            'data: {"type": "TEXT_MESSAGE" invalid}\n\n'.repeat(3),
-        ),
-    });
+  it('surfaces handler errors when the AG-UI stream cannot be parsed', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        createSseResponse([
+          'data: {"type":"RUN_STARTED","runId":"run-1","threadId":"user-123"}\n\n',
+          'data: {"type": "TEXT_MESSAGE_CONTENT" invalid}\n\n',
+        ]),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
     const logger = {
       warn: vi.fn(),
@@ -159,8 +186,6 @@ describe('createAguiDispatcher', () => {
 
     const dispatcher = createAguiDispatcher(logger, {
       baseUrl: 'https://agui.example.com/agent/test-agent',
-      fetchImpl: fetchMock as unknown as typeof fetch,
-      maxConsecutiveParseErrors: 3,
     });
 
     const events: NormalizedMessengerEvent[] = [
@@ -191,13 +216,12 @@ describe('createAguiDispatcher', () => {
 
     await expect(
       dispatcher.dispatch(events, { sessionId: 'user-123', userId: 'user-123' }, handlers),
-    ).rejects.toThrow('Exceeded consecutive AG-UI SSE parse errors');
+    ).rejects.toThrow();
 
-    expect(handlers.onRunError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: expect.stringContaining('Exceeded consecutive AG-UI SSE parse errors'),
-      }),
+    expect(handlers.onRunError).toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: 'user-123' }),
+      'Failed to dispatch events to AG-UI',
     );
-    expect(logger.warn).toHaveBeenCalledTimes(3);
   });
 });

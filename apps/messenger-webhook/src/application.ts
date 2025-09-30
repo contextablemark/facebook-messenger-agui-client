@@ -1,4 +1,4 @@
-import { FacebookMessengerAgent } from '@agui/messaging-sdk';
+import { FacebookMessengerAgent } from '@agui-gw/fb-messenger';
 
 import { loadConfig, type AppConfig } from './config';
 import { createServer, type GatewayFastifyInstance } from './server';

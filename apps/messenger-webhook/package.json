@@ -1,12 +1,12 @@
 {
-  "name": "@agui-gw/fb-messenger",
+  "name": "@agui-gw/messenger-webhook",
   "version": "0.1.0",
   "private": true,
   "description": "Facebook Messenger webhook gateway for AG-UI",
   "type": "module",
   "main": "src/index.ts",
   "dependencies": {
-    "@agui/messaging-sdk": "workspace:*",
+    "@agui-gw/fb-messenger": "workspace:*",
     "@fastify/helmet": "^10.1.1",
     "@fastify/rate-limit": "^8.1.1",
     "fastify": "^4.26.2",
