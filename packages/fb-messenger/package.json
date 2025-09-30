@@ -1,0 +1,14 @@
+{
+  "name": "@agui-gw/fb-messenger",
+  "version": "0.1.0",
+  "description": "Messenger integration SDK for AG-UI services",
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  }
+}

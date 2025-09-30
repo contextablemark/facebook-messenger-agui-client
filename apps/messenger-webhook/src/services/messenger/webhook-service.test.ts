@@ -1,4 +1,4 @@
-import { FacebookMessengerAgent, type MessengerWebhookPayload } from '@agui/messaging-sdk';
+import { FacebookMessengerAgent, type MessengerWebhookPayload } from '@agui-gw/fb-messenger';
 import { Registry } from 'prom-client';
 import type { Counter, Histogram } from 'prom-client';
 import { describe, expect, it, vi } from 'vitest';

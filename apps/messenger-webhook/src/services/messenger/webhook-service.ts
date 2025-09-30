@@ -6,13 +6,20 @@ import type {
   NormalizedMessengerMessage,
   OutboundMessageInput,
   SendMessageCommand,
-} from '@agui/messaging-sdk';
-import { FacebookMessengerAgent } from '@agui/messaging-sdk';
+} from '@agui-gw/fb-messenger';
+import { FacebookMessengerAgent } from '@agui-gw/fb-messenger';
 
 import { DispatchError, SignatureVerificationError } from '../../errors';
 import type { AppLogger } from '../../telemetry/logger';
 import type { GatewayMetrics } from '../../telemetry/metrics';
-import type { AguiDispatcher, AguiDispatchHandlers, DispatchContext } from '../agui';
+import type {
+  AguiDispatcher,
+  AguiDispatchHandlers,
+  AssistantMessagePayload,
+  DispatchContext,
+  RunErrorPayload,
+  RunLifecyclePayload,
+} from '../agui';
 import { DEFAULT_SESSION_TTL_SECONDS, SessionData, SessionStore } from '../session';
 
 /** Runtime parameters that tune Messenger webhook behaviour. */
@@ -209,10 +216,10 @@ export class MessengerWebhookService {
     typingState: TypingState,
   ): AguiDispatchHandlers {
     return {
-      onRunStarted: (payload) => {
+      onRunStarted: (payload: RunLifecyclePayload) => {
         this.logger.info({ sessionId, runId: payload.runId }, 'AG-UI run started');
       },
-      onRunFinished: async (payload) => {
+      onRunFinished: async (payload: RunLifecyclePayload) => {
         this.logger.info({ sessionId, runId: payload.runId }, 'AG-UI run finished');
         if (typingState.keepAlive) {
           clearInterval(typingState.keepAlive);
@@ -223,7 +230,7 @@ export class MessengerWebhookService {
           typingState.sent = false;
         }
       },
-      onRunError: async (payload) => {
+      onRunError: async (payload: RunErrorPayload) => {
         this.logger.error({ sessionId, payload }, 'AG-UI run error');
         if (participants.userId) {
           await this.sendErrorMessage(participants.userId);
@@ -237,7 +244,7 @@ export class MessengerWebhookService {
           typingState.sent = false;
         }
       },
-      onAssistantMessage: async (message) => {
+      onAssistantMessage: async (message: AssistantMessagePayload) => {
         if (!participants.userId) {
           this.logger.warn({ sessionId }, 'Cannot send AG-UI assistant message without user id');
           return;

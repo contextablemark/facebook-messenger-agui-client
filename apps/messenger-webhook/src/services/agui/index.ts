@@ -5,5 +5,6 @@ export type {
   AssistantMessagePayload,
   RunLifecyclePayload,
   RunErrorPayload,
+  AguiDispatcherOptions,
 } from './dispatcher';
-export { createAguiDispatcher } from './dispatcher';
+export { createAguiDispatcher, buildRunInput } from './dispatcher';

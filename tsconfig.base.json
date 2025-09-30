@@ -14,7 +14,8 @@
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@agui/messaging-sdk": ["packages/messaging-sdk/src/index.ts"]
+      "@agui-gw/fb-messenger": ["packages/fb-messenger/src/index.ts"],
+      "@agui-gw/core": ["packages/core/src/index.ts"]
     }
   }
 }

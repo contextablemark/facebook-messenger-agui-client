@@ -1,4 +1,4 @@
-import type { NormalizedMessengerEvent } from '@agui/messaging-sdk';
+import type { NormalizedMessengerEvent } from '@agui-gw/fb-messenger';
 import { describe, expect, it } from 'vitest';
 
 import { chunkText, resolveSessionId } from './webhook-service';
