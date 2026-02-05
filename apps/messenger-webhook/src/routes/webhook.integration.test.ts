@@ -53,8 +53,12 @@ describe('registerWebhookRoutes', () => {
   });
 
   it('validates payloads and delegates to the webhook service', async () => {
-    const handleWebhook = vi.fn().mockResolvedValue({ receivedEvents: 2 });
-    const service = { handleWebhook } as unknown as MessengerWebhookService;
+    const validateSignature = vi.fn().mockReturnValue(true);
+    const handleWebhookAsync = vi.fn().mockResolvedValue(undefined);
+    const service = {
+      validateSignature,
+      handleWebhookAsync,
+    } as unknown as MessengerWebhookService;
 
     const metrics = createMetricsStub();
     const logger = createLogger({ level: 'silent' });
@@ -89,13 +93,20 @@ describe('registerWebhookRoutes', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ status: 'ok', receivedEvents: 2 });
+    expect(response.json()).toEqual({ status: 'ok' });
     expect(metrics.requestCounter.inc).toHaveBeenCalledWith({ method: 'POST', status: '200' });
 
-    const call = handleWebhook.mock.calls[0][0];
+    // Signature validation should be called synchronously
+    expect(validateSignature).toHaveBeenCalled();
+
+    // Allow async processing to start
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    // Async handler should be called with the payload
+    expect(handleWebhookAsync).toHaveBeenCalled();
+    const call = handleWebhookAsync.mock.calls[0][0];
     expect(call.payload).toEqual(payload);
     expect(call.signatureHeader).toBe('sha256=test-signature');
-    expect(Buffer.isBuffer(call.rawBody) || typeof call.rawBody === 'string').toBe(true);
   });
 
   it('rejects malformed payloads with HTTP 400', async () => {
