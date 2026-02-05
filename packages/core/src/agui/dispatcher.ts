@@ -235,19 +235,16 @@ class HttpAguiDispatcher implements AguiDispatcher {
           cause: error,
         });
       },
-      onNewMessage: async ({ message }) => {
-        if (message.role !== 'assistant') {
-          return;
-        }
-
-        const content = typeof message.content === 'string' ? message.content : undefined;
-        if (!content) {
+      // Use onTextMessageEndEvent to capture the full accumulated text buffer.
+      // This handles text output that comes before, between, or after tool calls.
+      onTextMessageEndEvent: async ({ event, textMessageBuffer }) => {
+        if (!textMessageBuffer) {
           return;
         }
 
         await handlers.onAssistantMessage?.({
-          messageId: message.id,
-          content,
+          messageId: event.messageId,
+          content: textMessageBuffer,
           runId: base.runId,
           threadId: base.threadId,
         });
