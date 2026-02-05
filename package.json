@@ -2,12 +2,13 @@
   "name": "facebook-messenger-agui-client",
   "private": true,
   "version": "0.0.0",
+  "packageManager": "pnpm@9.15.0",
   "description": "Workspace for the AG-UI Facebook Messenger integration",
   "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=18.17",
-    "pnpm": ">=8"
+    "pnpm": ">=9"
   },
   "scripts": {
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
