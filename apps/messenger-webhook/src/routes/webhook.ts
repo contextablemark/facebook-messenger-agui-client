@@ -98,14 +98,24 @@ export async function registerWebhookRoutes(
         const rawBody = rawRequest.rawBody ?? JSON.stringify(request.body ?? {});
         const payload = parseMessengerWebhookPayload(request.body);
 
-        const result = await context.service.handleWebhook({
-          payload,
-          signatureHeader: signature,
-          rawBody,
-        });
+        // Validate signature synchronously before responding
+        const isValid = context.service.validateSignature(signature, rawBody);
+        if (!isValid) {
+          statusCode = 401;
+          context.metrics.requestCounter.inc({ method: request.method, status: '401' });
+          return reply.code(401).send({ error: 'Invalid signature' });
+        }
+
+        // Return 200 immediately to Facebook - they expect a fast response
+        // Process the webhook asynchronously to avoid timeouts and retries
+        context.service
+          .handleWebhookAsync({ payload, signatureHeader: signature, rawBody })
+          .catch((error) => {
+            request.log.error({ error }, 'Async webhook processing failed');
+          });
 
         context.metrics.requestCounter.inc({ method: request.method, status: '200' });
-        return reply.code(200).send({ status: 'ok', receivedEvents: result.receivedEvents });
+        return reply.code(200).send({ status: 'ok' });
       } catch (error) {
         let handledError = error;
         if (error instanceof ZodError) {

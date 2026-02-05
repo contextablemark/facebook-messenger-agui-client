@@ -51,6 +51,9 @@ interface TypingState {
   keepAlive?: NodeJS.Timeout;
 }
 
+/** TTL for deduplication cache entries (5 minutes). */
+const DEDUP_TTL_MS = 5 * 60 * 1000;
+
 const SLASH_HELP_MESSAGE = [
   'Available commands:',
   '/help  – show this message',
@@ -63,6 +66,8 @@ const SLASH_HELP_MESSAGE = [
  */
 export class MessengerWebhookService {
   private readonly sessionLocks = new Map<string, Promise<void>>();
+  /** Cache of recently processed message IDs to prevent duplicate processing from retries. */
+  private readonly processedMessages = new Map<string, number>();
 
   constructor(
     private readonly agent: FacebookMessengerAgent,
@@ -71,7 +76,16 @@ export class MessengerWebhookService {
     private readonly metrics: GatewayMetrics,
     private readonly logger: AppLogger,
     private readonly options: MessengerWebhookServiceOptions,
-  ) {}
+  ) {
+    // Periodically clean up expired dedup entries
+    setInterval(() => this.cleanupDedupCache(), DEDUP_TTL_MS);
+  }
+
+  /** Validate the webhook signature without processing. */
+  validateSignature(signatureHeader: string | undefined, rawBody: Buffer | string): boolean {
+    const buffer = toBuffer(rawBody);
+    return Boolean(signatureHeader && this.agent.verifySignature(signatureHeader, buffer));
+  }
 
   /**
    * Validate the request signature, normalise events, and enqueue processing
@@ -106,6 +120,87 @@ export class MessengerWebhookService {
     }
 
     return { receivedEvents: events.length };
+  }
+
+  /**
+   * Process webhook asynchronously with deduplication. This method is called
+   * after the HTTP response has been sent to Facebook to avoid timeouts.
+   */
+  async handleWebhookAsync(input: HandleWebhookInput): Promise<void> {
+    const events = this.agent.normalizeWebhook(input.payload);
+
+    if (events.length === 0) {
+      return;
+    }
+
+    // Deduplicate events by message ID to handle Facebook retries
+    const uniqueEvents = this.deduplicateEvents(events);
+
+    if (uniqueEvents.length === 0) {
+      this.logger.debug('All events already processed (duplicates from retry)');
+      return;
+    }
+
+    const grouped = groupEventsBySession(uniqueEvents);
+
+    for (const [sessionId, sessionEvents] of grouped.entries()) {
+      try {
+        await this.processSession(sessionId, sessionEvents);
+      } catch (error) {
+        this.logger.error({ sessionId, error }, 'Failed to process session');
+      }
+    }
+  }
+
+  /** Filter out events that have already been processed (handling retries). */
+  private deduplicateEvents(events: NormalizedMessengerEvent[]): NormalizedMessengerEvent[] {
+    const now = Date.now();
+    const unique: NormalizedMessengerEvent[] = [];
+
+    for (const event of events) {
+      const messageId = this.extractMessageId(event);
+      if (!messageId) {
+        // Events without message IDs (e.g., delivery receipts) pass through
+        unique.push(event);
+        continue;
+      }
+
+      if (this.processedMessages.has(messageId)) {
+        this.logger.debug({ messageId }, 'Skipping duplicate message (retry)');
+        continue;
+      }
+
+      // Mark as processed
+      this.processedMessages.set(messageId, now);
+      unique.push(event);
+    }
+
+    return unique;
+  }
+
+  /** Extract a unique message identifier from an event for deduplication. */
+  private extractMessageId(event: NormalizedMessengerEvent): string | undefined {
+    if (event.type === 'message' && event.message?.envelope?.mid) {
+      return event.message.envelope.mid;
+    }
+    // Postbacks don't have message IDs, use timestamp + sender as fallback
+    if (event.type === 'postback') {
+      const raw = event.raw as { sender?: { id?: string } } | undefined;
+      if (raw?.sender?.id) {
+        return `postback:${raw.sender.id}:${event.timestamp}`;
+      }
+    }
+    return undefined;
+  }
+
+  /** Remove expired entries from the deduplication cache. */
+  private cleanupDedupCache(): void {
+    const now = Date.now();
+    for (const [messageId, timestamp] of this.processedMessages.entries()) {
+      if (now - timestamp > DEDUP_TTL_MS) {
+        this.processedMessages.delete(messageId);
+      }
+    }
   }
 
   /**
