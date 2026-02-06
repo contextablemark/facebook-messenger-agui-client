@@ -65,7 +65,32 @@ CI runs lint, type-check, and tests on every push via [GitHub Actions](https://g
 
 ## Deployment Notes
 
-Follow `docs/deployment/railway.md` and `infra/railway/README.md` when preparing staging or production services on Railway. Configure the environment variables from `.env.example` (or the Railway checklist) before promoting builds.
+### Railway
+
+The project is configured for Railway deployment with the following considerations:
+
+**pnpm Version**: The project uses pnpm 9.x (specified via `"packageManager": "pnpm@9.15.0"` in `package.json`). Railway's Railpack automatically reads this field to install the correct version. The lockfile (`pnpm-lock.yaml`) requires pnpm 9.x to parse correctly.
+
+**Environment Variables**: Configure the following in your Railway service:
+
+- `FB_APP_SECRET` – Facebook App Secret for signature verification
+- `FB_PAGE_ACCESS_TOKEN` – Page Access Token for Send API calls
+- `FB_WEBHOOK_VERIFY_TOKEN` – Token for webhook subscription verification
+- `AGUI_BASE_URL` – AG-UI endpoint URL
+- `AGUI_API_KEY` – (optional) API key for AG-UI authentication
+- `PORT` – (optional) defaults to 8080
+
+**AG-UI Compatibility**: The gateway uses `@ag-ui/*@0.0.43`. Ensure your AG-UI backend runs a compatible version to avoid protocol mismatches.
+
+For detailed Railway setup, see `docs/deployment/railway.md` and `infra/railway/README.md`.
+
+### Webhook Architecture
+
+The webhook handler is designed for Facebook's delivery expectations:
+
+- **Immediate 200 Response**: Facebook expects responses within 20 seconds. The webhook validates the signature and returns 200 immediately, then processes events asynchronously.
+- **Deduplication**: Facebook retries webhooks on timeout. The gateway tracks processed message IDs (5-minute TTL) to prevent duplicate processing.
+- **Session Locking**: Concurrent webhooks for the same conversation are serialized to prevent race conditions.
 
 ## Troubleshooting & security
 
